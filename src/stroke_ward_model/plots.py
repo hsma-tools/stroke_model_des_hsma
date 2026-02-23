@@ -33,6 +33,57 @@ class TrialPlots:
         """
         return px.histogram(self.trial_patient_df, x="sdec_los")
 
+    def plot_arrivals_per_day(self, run):
+        """
+        Plot daily arrivals for a single simulation run.
+
+        We filter to one run because aggregating over all runs would average
+        out day-to-day variability and flatten the pattern of busy and quiet
+        days that we want to inspect.
+
+        We keep all patients as daily arrival counts are not affected by
+        whether we are in the warm-up period or not.
+
+        Parameters
+        ----------
+        run : int
+            Run number to filter on (values from the `run` column).
+
+        Returns
+        -------
+        dict[str, plotly.graph_objs._figure.Figure]
+            Dictionary with two Plotly figures:
+            - 'histogram': distribution of arrivals per day (how many days
+              had N arrivals)
+            - 'timeseries': arrivals per day over time within the chosen run
+        """
+        df_run = self.trial_patient_df[self.trial_patient_df["run"] == run]
+
+        # Convert arrival time (minutes) into arrival day index
+        arrival_day = (df_run["clock_start"] // (24 * 60)).astype(int)
+
+        # Count number of arrivals per day (series indexed by day)
+        daily_counts = arrival_day.value_counts().sort_index()
+
+        # Histogram: distribution of daily arrivals
+        fig_hist = px.histogram(x=daily_counts.values)
+        fig_hist.update_layout(
+            showlegend=False,
+            xaxis_title="Number of arrivals per day",
+            yaxis_title="Frequency",
+            title=f"Distribution of daily arrivals (run {run})",
+        )
+
+        # Time series: arrivals per day over the simulation
+        fig_ts = px.line(
+            x=daily_counts.index,
+            y=daily_counts.values,
+            labels={"x": "Day of simulation", "y": "Number of arrivals"},
+            title=f"Arrivals per day over time (run {run})",
+        )
+
+        return {"histogram": fig_hist, "timeseries": fig_ts}
+
 
 if __name__ == "__ main __":
     from stroke_ward_model.inputs import g
