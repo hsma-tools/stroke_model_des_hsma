@@ -10,10 +10,25 @@ import plotly.express as px
 # Model imports
 from stroke_ward_model.inputs import g
 from stroke_ward_model.trial import Trial
+from stroke_ward_model.metrics import Metrics
 
 # App imports
-from app_utils import iconMetricContainer
+from app_utils import (
+    iconMetricContainer,
+    save_run,
+    render_state_io,
+    time_vars,
+    split_vars,
+)
+
+from scenario_comparison import (
+    render_scenario_manager,
+    patient_level_metric_choices,
+    render_run_manager,
+)
+
 from convert_event_log import convert_event_log, create_vidigi_animation
+
 from plots import (
     plot_dfg_per_feature,
     generate_occupancy_plots,
@@ -21,7 +36,6 @@ from plots import (
     plot_time_heatmap,
 )
 
-from metrics import Metrics
 
 st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 
@@ -30,69 +44,14 @@ st.logo("app/resources/nhs-logo-colour.png", size="large")
 with open("app/resources/style.css") as css:
     st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
 
+# --- Initialise state ---
+if "metrics_runs" not in st.session_state:
+    st.session_state.metrics_runs = []  # list of {"label": str, "metrics": Metrics}
+if "baseline_index" not in st.session_state:
+    st.session_state.baseline_index = 0
+
 g.gen_graph = True
 
-patient_level_metric_choices = {
-    "Nurse Queue Time": "q_time_nurse",
-    "Ward Queue Time": "q_time_ward",
-    "Onset Type": "onset_type",
-    "MRS Type": "mrs_type",
-    "MRS on Discharge": "mrs_discharge",
-    "Diagnosis": "diagnosis",
-    "Patient Diagnosis": "patient_diagnosis",
-    "Priority": "priority",
-    "Non-Admission": "non_admission",
-    "Advanced CT Pathway": "advanced_ct_pathway",
-    "SDEC Pathway": "sdec_pathway",
-    "SDEC Running when Required": "sdec_running_when_required",
-    "SDEC Full when Required": "sdec_full_when_required",
-    "Thrombolysis": "thrombolysis",
-    "Thrombectomy": "thrombectomy",
-    "Admission Avoidance": "admission_avoidance",
-    "Patient with TIA, stroke mimic or non-stroke not admitted": "non_admitted_tia_ns_sm",
-    "Ward LOS": "ward_los",
-    "Ward LOS for Thrombolysis Patients": "ward_los_thrombolysis",
-    "SDEC LOS": "sdec_los",
-    "CTP duration": "ctp_duration",
-    "CT duration": "ct_duration",
-    "Arrived OOH": "arrived_ooh",
-    "Patient Diagnosis Type": "patient_diagnosis_type",
-}
-
-split_vars = {
-    "Onset Type": "onset_type",
-    "MRS Type": "mrs_type",
-    "MRS on Discharge": "mrs_discharge",
-    "Patient Diagnosis": "patient_diagnosis",
-    "Priority": "priority",
-    "Advanced CT Pathway": "advanced_ct_pathway",
-    "SDEC Pathway": "sdec_pathway",
-    "SDEC Running when Required": "sdec_running_when_required",
-    "SDEC Full when Required": "sdec_full_when_required",
-    "Thrombolysis": "thrombolysis",
-    "Thrombectomy": "thrombectomy",
-    "Admission Avoidance": "admission_avoidance",
-    "Patient with TIA, stroke mimic or non-stroke not admitted": "non_admitted_tia_ns_sm",
-    "Arrived OOH": "arrived_ooh",
-    "Patient Diagnosis Type": "patient_diagnosis_type",
-}
-
-time_vars = {
-    "Clock Start": "clock_start",
-    "Nurse Queue Start": "nurse_q_start_time",
-    "Nurse Triage Start": "nurse_triage_start_time",
-    "Nurse Triage End": "nurse_triage_end_time",
-    "CT Scan Start": "ct_scan_start_time",
-    "CT Scan End": "ct_scan_end_time",
-    "CTP Scan Start": "ctp_scan_start_time",
-    "CTP Scan End": "ctp_scan_end_time",
-    "SDEC Admit Time": "sdec_admit_time",
-    "SDEC Discharge Time": "sdec_discharge_time",
-    "Ward Queue Start": "ward_q_start_time",
-    "Ward Admit Time": "ward_admit_time",
-    "Ward Discharge Time": "ward_discharge_time",
-    "Model Exit Time": "exit_time",
-}
 
 #########################
 # MARK: Inputs          #
@@ -389,7 +348,39 @@ when trying out different scenarios.</b>
 #####################
 # MARK: Run Model   #
 #####################
-button_run_pressed = st.button("Run simulation")
+
+
+run_col_1, run_col_spacing, run_col_2 = st.columns([0.35, 0.15, 0.5])
+
+with run_col_1:
+    st.subheader("Run a new scenario")
+
+    existing_labels = [r["label"] for r in st.session_state.get("metrics_runs", [])]
+
+    run_label = st.text_input(
+        "Label this run", placeholder="e.g. 'Baseline' or 'Increased SDEC capacity'"
+    )
+
+    label_missing = run_label.strip() == ""
+    label_duplicate = run_label.strip() in existing_labels
+
+    if label_missing:
+        st.caption("⚠️ Please enter a label before running.")
+    elif label_duplicate:
+        st.caption(
+            f"⚠️ A run named '{run_label}' already exists. Please choose a unique label."
+        )
+
+    button_run_pressed = st.button(
+        "Run simulation", disabled=label_missing or label_duplicate, type="primary"
+    )
+
+
+with run_col_spacing:
+    st.subheader("*or*")
+
+with run_col_2:
+    render_state_io()
 
 if button_run_pressed:
     with st.spinner("Running Model - Please Wait", show_time=True):
@@ -405,15 +396,18 @@ if button_run_pressed:
             df_trial_results=my_trial.df_trial_results,
         )
 
+        save_run(metrics, label=run_label or None)
+
         # st.write(my_trial.trial_info)
 
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
             [
                 "Overview",
                 "Output Graphs",
                 "Process Maps",
                 "Model Exploration",
                 "Animation",
+                "Scenario Comparison",
             ]
         )
 
@@ -940,3 +934,7 @@ being full. Range across runs = {metrics.sdec_full_per_year_min:.0f} to {metrics
 
             # st.write(create_vidigi_animation(event_log, scenario=g()))
             st.write("Coming Soon!")
+
+        with tab6:
+            render_run_manager()
+            render_scenario_manager()
