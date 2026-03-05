@@ -293,7 +293,8 @@ def render_scenario_manager():
         if i == st.session_state.baseline_index:
             continue
 
-        st.subheader(f"{run['label']} vs baseline")
+        baseline_label = runs[st.session_state.baseline_index]["label"]
+        st.subheader(f"{run['label']} :grey[vs] {baseline_label}")
 
         render_key_metric_cards(run, baseline)
 

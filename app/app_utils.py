@@ -190,28 +190,41 @@ def download_state_button():
 
 
 def render_state_io():
-    st.subheader("Load a previous session")
+    col_load, col_spacing, col_save = st.columns([0.45, 0.1, 0.45])
+    with col_load:
+        st.subheader("Load a previous session")
 
-    uploaded = st.file_uploader(
-        "📂 Load runs from JSON",
-        type="json",
-        key="json_uploader",
-        label_visibility="collapsed",
-    )
+        uploaded = st.file_uploader(
+            "📂 Load runs from JSON",
+            type="json",
+            key="json_uploader",
+            label_visibility="collapsed",
+        )
 
-    if uploaded is not None:
-        # Use the file's id to track if we've already processed this specific upload
-        file_id = uploaded.file_id
-        if st.session_state.get("last_loaded_file_id") != file_id:
-            load_state_from_json(uploaded.read().decode("utf-8"))
-            st.session_state.last_loaded_file_id = file_id
-            st.toast(
-                f"✅ Loaded {len(st.session_state.metrics_runs)} run(s) successfully."
-            )
+        if uploaded is not None:
+            file_id = uploaded.file_id
+            if st.session_state.get("last_loaded_file_id") != file_id:
+                load_state_from_json(uploaded.read().decode("utf-8"))
+                st.session_state.last_loaded_file_id = file_id
+                st.toast(
+                    f"✅ Loaded {len(st.session_state.metrics_runs)} run(s) successfully."
+                )
 
-        labels = [f"- {r['label']}" for r in st.session_state.get("metrics_runs", [])]
-        st.write("The following runs are currently stored in memory:")
-        st.write("\n".join(labels))
+        st.session_state.runs_display = st.empty()
+        refresh_runs_display()
 
-    st.subheader("Save your current session to a file")
-    download_state_button()
+    with col_save:
+        st.subheader("Save your current session to a file")
+        download_state_button()
+
+
+def refresh_runs_display():
+    if "runs_display" not in st.session_state:
+        return
+    runs = st.session_state.get("metrics_runs", [])
+    with st.session_state.runs_display:
+        if runs:
+            st.write("The following runs are currently stored in memory:")
+            st.write("\n".join(f"- {r['label']}" for r in runs))
+        else:
+            st.caption("No runs currently in memory.")

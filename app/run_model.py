@@ -19,6 +19,7 @@ from app_utils import (
     render_state_io,
     time_vars,
     split_vars,
+    refresh_runs_display,
 )
 
 from scenario_comparison import (
@@ -344,597 +345,598 @@ when trying out different scenarios.</b>
 
     g.master_seed = master_seed
 
+    #####################
+    # MARK: Run Model   #
+    #####################
 
-#####################
-# MARK: Run Model   #
-#####################
+render_state_io()
 
 
-run_col_1, run_col_spacing, run_col_2 = st.columns([0.35, 0.15, 0.5])
+new_run_tab, scenario_comparison_tab = st.tabs(
+    ["Run a New Scenario", "Compare Scenarios"]
+)
 
-with run_col_1:
-    st.subheader("Run a new scenario")
 
-    existing_labels = [r["label"] for r in st.session_state.get("metrics_runs", [])]
+with new_run_tab:
+    run_col_1, run_col_spacing, run_col_2 = st.columns([0.35, 0.15, 0.5])
 
-    run_label = st.text_input(
-        "Label this run", placeholder="e.g. 'Baseline' or 'Increased SDEC capacity'"
-    )
+    with run_col_1:
+        st.subheader("Run a new scenario")
 
-    label_missing = run_label.strip() == ""
-    label_duplicate = run_label.strip() in existing_labels
+        existing_labels = [r["label"] for r in st.session_state.get("metrics_runs", [])]
 
-    if label_missing:
-        st.caption("⚠️ Please enter a label before running.")
-    elif label_duplicate:
-        st.caption(
-            f"⚠️ A run named '{run_label}' already exists. Please choose a unique label."
+        run_label = st.text_input(
+            "Label this run", placeholder="e.g. 'Baseline' or 'Increased SDEC capacity'"
         )
 
-    button_run_pressed = st.button(
-        "Run simulation", disabled=label_missing or label_duplicate, type="primary"
-    )
+        label_missing = run_label.strip() == ""
+        label_duplicate = run_label.strip() in existing_labels
 
+        if label_missing:
+            st.caption("⚠️ Please enter a label before running.")
+        elif label_duplicate:
+            st.caption(
+                f"⚠️ A run named '{run_label}' already exists. Please choose a unique label."
+            )
 
-with run_col_spacing:
-    st.subheader("*or*")
-
-with run_col_2:
-    render_state_io()
-
-if button_run_pressed:
-    with st.spinner("Running Model - Please Wait", show_time=True):
-        # Create an instance of the Trial class
-        my_trial = Trial()
-
-        # Call the run_trial method of our Trial object
-        my_trial.run_trial()
-
-        metrics = Metrics(
-            g=g(),
-            patient_df_including_warmup=my_trial.trial_patient_df,
-            df_trial_results=my_trial.df_trial_results,
+        button_run_pressed = st.button(
+            "Run simulation", disabled=label_missing or label_duplicate, type="primary"
         )
 
-        save_run(metrics, label=run_label or None)
+    if button_run_pressed:
+        with st.spinner("Running Model - Please Wait", show_time=True):
+            # Create an instance of the Trial class
+            my_trial = Trial()
 
-        # st.write(my_trial.trial_info)
+            # Call the run_trial method of our Trial object
+            my_trial.run_trial()
 
-        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-            [
-                "Overview",
-                "Output Graphs",
-                "Process Maps",
-                "Model Exploration",
-                "Animation",
-                "Scenario Comparison",
-            ]
-        )
+            metrics = Metrics(
+                g=g(),
+                patient_df_including_warmup=my_trial.trial_patient_df,
+                df_trial_results=my_trial.df_trial_results,
+            )
 
-        ############################
-        # MARK: Summary statistics #
-        ############################
-        with tab1:
-            st.subheader("Configuration")
+            save_run(metrics, label=run_label or None)
 
-            col1, col2, col3, col4, col5 = st.columns(5)
+            # st.write(my_trial.trial_info)
 
-            with col1:
-                with iconMetricContainer(
-                    key="ctp_avail",
-                    icon_unicode="ea4a",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="CTP scanners",
-                        value="Yes" if g.number_of_ctp > 0 else "No",
-                        border=True,
-                    )
+            tab1, tab2, tab3, tab4, tab5 = st.tabs(
+                [
+                    "Overview",
+                    "Output Graphs",
+                    "Process Maps",
+                    "Model Exploration",
+                    "Animation",
+                ]
+            )
 
-                    st.caption(
-                        f"""
-Available from {metrics.start_hour_ctp:g}:00-{metrics.end_hour_ctp:g}:00 ({metrics.duration_hours_ctp:g}h)
-                        """
-                    )
+            ############################
+            # MARK: Summary statistics #
+            ############################
+            with tab1:
+                st.subheader("Configuration")
 
-            with col2:
-                with iconMetricContainer(
-                    key="sdec_beds",
-                    icon_unicode="e4d0",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label=f"SDEC beds",
-                        value=g.sdec_beds,
-                        border=True,
-                    )
+                col1, col2, col3, col4, col5 = st.columns(5)
 
-                    if g.sdec_beds > 0:
+                with col1:
+                    with iconMetricContainer(
+                        key="ctp_avail",
+                        icon_unicode="ea4a",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="CTP scanners",
+                            value="Yes" if g.number_of_ctp > 0 else "No",
+                            border=True,
+                        )
+
                         st.caption(
                             f"""
-Available from {metrics.start_hour_sdec:g}:00-{metrics.end_hour_sdec:g}:00 ({metrics.duration_hours_sdec:g}h)
+    Available from {metrics.start_hour_ctp:g}:00-{metrics.end_hour_ctp:g}:00 ({metrics.duration_hours_ctp:g}h)
                             """
                         )
-                    else:
+
+                with col2:
+                    with iconMetricContainer(
+                        key="sdec_beds",
+                        icon_unicode="e4d0",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label=f"SDEC beds",
+                            value=g.sdec_beds,
+                            border=True,
+                        )
+
+                        if g.sdec_beds > 0:
+                            st.caption(
+                                f"""
+    Available from {metrics.start_hour_sdec:g}:00-{metrics.end_hour_sdec:g}:00 ({metrics.duration_hours_sdec:g}h)
+                                """
+                            )
+                        else:
+                            st.caption("")
+
+                with col3:
+                    with iconMetricContainer(
+                        key="sdec_therapy",
+                        icon_unicode="f2c2",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="SDEC Therapy",
+                            value="Yes" if g.therapy_sdec else "No",
+                            border=True,
+                        )
+
+                        # Blank lines for spacing
                         st.caption("")
 
-            with col3:
-                with iconMetricContainer(
-                    key="sdec_therapy",
-                    icon_unicode="f2c2",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="SDEC Therapy",
-                        value="Yes" if g.therapy_sdec else "No",
-                        border=True,
-                    )
+                with col4:
+                    with iconMetricContainer(
+                        key="ward_bed_count",
+                        icon_unicode="ea48",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Standard Ward Beds",
+                            value=f"{g.number_of_ward_beds}",
+                            border=True,
+                        )
 
-                    # Blank lines for spacing
-                    st.caption("")
+                        # Blank lines for spacing
+                        st.caption("")
 
-            with col4:
-                with iconMetricContainer(
-                    key="ward_bed_count",
-                    icon_unicode="ea48",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Standard Ward Beds",
-                        value=f"{g.number_of_ward_beds}",
-                        border=True,
-                    )
+                with col5:
+                    with iconMetricContainer(
+                        key="triage_nurse_count",
+                        icon_unicode="f5a3",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Triage Nurses",
+                            value=f"{g.number_of_nurses}",
+                            border=True,
+                        )
 
-                    # Blank lines for spacing
-                    st.caption("")
+                        # Blank lines for spacing
+                        st.caption("")
 
-            with col5:
-                with iconMetricContainer(
-                    key="triage_nurse_count",
-                    icon_unicode="f5a3",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Triage Nurses",
-                        value=f"{g.number_of_nurses}",
-                        border=True,
-                    )
+                st.divider()
+                st.subheader("Patient throughoutput")
 
-                    # Blank lines for spacing
-                    st.caption("")
+                pcol1, pcol2, pcol3, pcol4 = st.columns(4)
 
-            st.divider()
-            st.subheader("Patient throughoutput")
-
-            pcol1, pcol2, pcol3, pcol4 = st.columns(4)
-
-            with pcol1:
-                with iconMetricContainer(
-                    key="patients_per_year",
-                    icon_unicode="ebcc",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Average Patients per Year",
-                        value=f"{metrics.average_patients_per_year:.0f}",
-                        border=True,
-                    )
-
-                st.caption(f"""
-Range: {metrics.scale_to_year(metrics.min_patients_per_run):.0f}
-to {metrics.scale_to_year(metrics.max_patients_per_run):.0f}
-
-In-hours: {metrics.scale_to_year(metrics.in_hours_arrivals.mean()):.0f}
-(range: {metrics.scale_to_year(metrics.in_hours_arrivals.min()):.0f}
-to {metrics.scale_to_year(metrics.in_hours_arrivals.max()):.0f})
-
-Out-of-hours: {metrics.scale_to_year(metrics.ooh_arrivals.mean()):.0f}
-(range: {metrics.scale_to_year(metrics.ooh_arrivals.min()):.0f}
-to {metrics.scale_to_year(metrics.ooh_arrivals.max()):.0f})
-                           """)
-
-            with pcol2:
-                st.dataframe(
-                    round(
-                        metrics.diagnosis_by_stroke_type_count,
-                        0,
-                    ),
-                    hide_index=True,
-                )
-
-            with pcol3:
-                with iconMetricContainer(
-                    key="patients_per_day",
-                    icon_unicode="e878",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Average Patients per Day",
-                        value=f"{(metrics.average_patients_per_day):.0f}",
-                        border=True,
-                    )
-
-            with pcol4:
-                st.dataframe(
-                    metrics.diagnosis_by_stroke_type_count_per_day.round(2),
-                    hide_index=True,
-                )
-
-            st.divider()
-
-            st.subheader("Results")
-
-            col1a, col2a, col3a = st.columns(3)
-
-            # Add container with thrombolysis savings per year
-            throm_yearly_save = (
-                my_trial.df_trial_results["Thrombolysis Savings (£)"]
-                / metrics.sim_duration_years
-            ).mean()
-
-            with col1a:
-                with iconMetricContainer(
-                    key="thrombolysis_savings",
-                    icon_unicode="e133",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Average Thrombolysis Savings per Year",
-                        value=f"£{throm_yearly_save:,.0f}",
-                        border=True,
-                    )
+                with pcol1:
+                    with iconMetricContainer(
+                        key="patients_per_year",
+                        icon_unicode="ebcc",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Average Patients per Year",
+                            value=f"{metrics.average_patients_per_year:.0f}",
+                            border=True,
+                        )
 
                     st.caption(f"""
-The average total savings for the full model period
-of {metrics.sim_duration_display} were
-£{metrics.df_trial_results["Thrombolysis Savings (£)"].mean():,.0f}.
-This looks only at savings from patients who were able to be offered thrombolysis
-due to the enhanced capabilities of the CTP scanner.
-""")
+    Range: {metrics.scale_to_year(metrics.min_patients_per_run):.0f}
+    to {metrics.scale_to_year(metrics.max_patients_per_run):.0f}
 
-            with col2a:
-                with iconMetricContainer(
-                    key="sdec_savings",
-                    icon_unicode="e4d0",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Average SDEC Savings per Year",
-                        value=f"£{metrics.sdec_yearly_save:,.0f}",
-                        border=True,
+    In-hours: {metrics.scale_to_year(metrics.in_hours_arrivals.mean()):.0f}
+    (range: {metrics.scale_to_year(metrics.in_hours_arrivals.min()):.0f}
+    to {metrics.scale_to_year(metrics.in_hours_arrivals.max()):.0f})
+
+    Out-of-hours: {metrics.scale_to_year(metrics.ooh_arrivals.mean()):.0f}
+    (range: {metrics.scale_to_year(metrics.ooh_arrivals.min()):.0f}
+    to {metrics.scale_to_year(metrics.ooh_arrivals.max()):.0f})
+                            """)
+
+                with pcol2:
+                    st.dataframe(
+                        round(
+                            metrics.diagnosis_by_stroke_type_count,
+                            0,
+                        ),
+                        hide_index=True,
                     )
 
-                    st.caption(f"""
-The average total savings for the full model period
-of {metrics.sim_duration_display} were
-£{metrics.df_trial_results["SDEC Savings (£)"].mean():,.0f}. This is
-calculated as the total savings from running the SDEC, subtracting the
-medical cost of running the SDEC. SDEC running costs are set to
-£{(g.sdec_dr_cost_min * 60):.2f} per hour.
-                    """)
+                with pcol3:
+                    with iconMetricContainer(
+                        key="patients_per_day",
+                        icon_unicode="e878",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Average Patients per Day",
+                            value=f"{(metrics.average_patients_per_day):.0f}",
+                            border=True,
+                        )
 
-            with col3a:
-                with iconMetricContainer(
-                    key="overall_savings",
-                    icon_unicode="f04b",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Average Overall Savings per Year",
-                        value=f"£{metrics.overall_yearly_save:,.0f}",
-                        border=True,
+                with pcol4:
+                    st.dataframe(
+                        metrics.diagnosis_by_stroke_type_count_per_day.round(2),
+                        hide_index=True,
                     )
 
-                    st.caption(
-                        f"""
-The average total savings for the full model period
-of {metrics.sim_duration_display} were
-£{metrics.df_trial_results["Total Savings"].mean():,.0f}.
-                        """
-                    )
+                st.divider()
 
-            st.html("<br/>")
+                st.subheader("Results")
 
-            col1b, col2b, col3b = st.columns(3)
+                col1a, col2a, col3a = st.columns(3)
 
-            with col1b:
-                # Add container with extra patients thrombolysed per year
-                with iconMetricContainer(
-                    key="additional_thrombolysis",
-                    icon_unicode="e138",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Extra patients thrombolysed per year",
-                        value=f"{metrics.extra_throm_yearly:.0f}",
-                        border=True,
-                    )
+                # Add container with thrombolysis savings per year
+                throm_yearly_save = (
+                    my_trial.df_trial_results["Thrombolysis Savings (£)"]
+                    / metrics.sim_duration_years
+                ).mean()
+
+                with col1a:
+                    with iconMetricContainer(
+                        key="thrombolysis_savings",
+                        icon_unicode="e133",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Average Thrombolysis Savings per Year",
+                            value=f"£{throm_yearly_save:,.0f}",
+                            border=True,
+                        )
+
+                        st.caption(f"""
+    The average total savings for the full model period
+    of {metrics.sim_duration_display} were
+    £{metrics.df_trial_results["Thrombolysis Savings (£)"].mean():,.0f}.
+    This looks only at savings from patients who were able to be offered thrombolysis
+    due to the enhanced capabilities of the CTP scanner.
+    """)
+
+                with col2a:
+                    with iconMetricContainer(
+                        key="sdec_savings",
+                        icon_unicode="e4d0",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Average SDEC Savings per Year",
+                            value=f"£{metrics.sdec_yearly_save:,.0f}",
+                            border=True,
+                        )
+
+                        st.caption(f"""
+    The average total savings for the full model period
+    of {metrics.sim_duration_display} were
+    £{metrics.df_trial_results["SDEC Savings (£)"].mean():,.0f}. This is
+    calculated as the total savings from running the SDEC, subtracting the
+    medical cost of running the SDEC. SDEC running costs are set to
+    £{(g.sdec_dr_cost_min * 60):.2f} per hour.
+                        """)
+
+                with col3a:
+                    with iconMetricContainer(
+                        key="overall_savings",
+                        icon_unicode="f04b",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Average Overall Savings per Year",
+                            value=f"£{metrics.overall_yearly_save:,.0f}",
+                            border=True,
+                        )
+
+                        st.caption(
+                            f"""
+    The average total savings for the full model period
+    of {metrics.sim_duration_display} were
+    £{metrics.df_trial_results["Total Savings"].mean():,.0f}.
+                            """
+                        )
+
+                st.html("<br/>")
+
+                col1b, col2b, col3b = st.columns(3)
+
+                with col1b:
+                    # Add container with extra patients thrombolysed per year
+                    with iconMetricContainer(
+                        key="additional_thrombolysis",
+                        icon_unicode="e138",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Extra patients thrombolysed per year",
+                            value=f"{metrics.extra_throm_yearly:.0f}",
+                            border=True,
+                        )
+
+                        st.caption("""
+    This looks at the average count of patients who were able to be offered
+    thrombolysis due to the enhanced capabilities of the CTP scanner.
+                        """)
+
+                with col2b:
+                    # Add container with average admissions avoided per year
+                    with iconMetricContainer(
+                        key="admissions_avoided",
+                        icon_unicode="e0b6",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Average Admissions Avoided per Year",
+                            value=f"{metrics.avoid_yearly:,.0f}",
+                            border=True,
+                        )
+
+                        st.caption(
+                            f"""
+    Avoided admissions are those patients who were able to leave after being seen
+    in SDEC, and would have had a full admission if the SDEC was not available.
+    Range = {metrics.avoid_yearly_min} to {metrics.avoid_yearly_max} per year across runs.
+
+    The average total number of admissions avoided for the full model period
+    of {metrics.sim_duration_display} were
+    {metrics.df_trial_results["Number of Admissions Avoided In Run"].mean():,.0f}.
+                            """
+                        )
+
+                # Add container with mean ward occupancy
+                with col3b:
+                    with iconMetricContainer(
+                        key="ward_occupancy",
+                        icon_unicode="e13c",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Mean Ward Occupancy",
+                            value=f"""
+    {metrics.mean_ward_occ:,.0f} of {g.number_of_ward_beds} beds
+                            """,
+                            border=True,
+                        )
+
+                        st.caption(
+                            f"""
+    This is an average occupancy of {(metrics.mean_ward_occ / g.number_of_ward_beds):.1%}
+                            """
+                        )
+
+                col1c, col2c, col3c = st.columns(3)
+
+                # Add container with average admission delays per year
+                with col1c:
+                    with iconMetricContainer(
+                        key="admission_delays",
+                        icon_unicode="f38c",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Average Admission Delays per Year",
+                            value=f"{metrics.admit_delay_yearly:,.0f}",
+                            border=True,
+                        )
+
+                        st.caption(
+                            f"""
+    Range = {metrics.admit_delay_yearly_min} to {metrics.admit_delay_yearly_max} per year across runs.
+    The average number of admissions that were delayed for the full model period
+    of {metrics.sim_duration_display} were
+    {metrics.df_trial_results["Number of Admission Delays"].mean():,.0f}.
+                            """
+                        )
+
+                # Add container with average duration of admission delays
+                with col2c:
+                    with iconMetricContainer(
+                        key="admission_delay_average",
+                        icon_unicode="e425",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Average Ward Admission Delay Duration",
+                            value=f"""
+    {g.trial_mean_q_time_ward[g.trials_run_counter]} hours
+                            """,
+                            border=True,
+                        )
+
+                # Add container with maximum duration of admission delay
+                with col3c:
+                    with iconMetricContainer(
+                        key="admission_delay_max",
+                        icon_unicode="f377",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Maximum Ward Admission Delay Duration",
+                            value=f"""
+    {g.trial_max_q_time_ward[g.trials_run_counter]} hours
+                            """,
+                            border=True,
+                        )
 
                     st.caption("""
-This looks at the average count of patients who were able to be offered
-thrombolysis due to the enhanced capabilities of the CTP scanner.
+    This looks at the maximum delay seen across all model runs
                     """)
 
-            with col2b:
-                # Add container with average admissions avoided per year
-                with iconMetricContainer(
-                    key="admissions_avoided",
-                    icon_unicode="e0b6",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Average Admissions Avoided per Year",
-                        value=f"{metrics.avoid_yearly:,.0f}",
-                        border=True,
-                    )
+                col1d, col2d = st.columns(2)
 
-                    st.caption(
-                        f"""
-Avoided admissions are those patients who were able to leave after being seen
-in SDEC, and would have had a full admission if the SDEC was not available.
-Range = {metrics.avoid_yearly_min} to {metrics.avoid_yearly_max} per year across runs.
+                # Add container with average duration of nurse triage delay
+                with col1d:
+                    with iconMetricContainer(
+                        key="nurse_delay_average",
+                        icon_unicode="e425",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Average Nurse Triage Delay Duration",
+                            value=f"""
+    {g.trial_mean_q_time_nurse[g.trials_run_counter]} minutes
+                            """,
+                            border=True,
+                        )
 
-The average total number of admissions avoided for the full model period
-of {metrics.sim_duration_display} were
-{metrics.df_trial_results["Number of Admissions Avoided In Run"].mean():,.0f}.
-                        """
-                    )
-
-            # Add container with mean ward occupancy
-            with col3b:
-                with iconMetricContainer(
-                    key="ward_occupancy",
-                    icon_unicode="e13c",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Mean Ward Occupancy",
-                        value=f"""
-{metrics.mean_ward_occ:,.0f} of {g.number_of_ward_beds} beds
-                        """,
-                        border=True,
-                    )
-
-                    st.caption(
-                        f"""
-This is an average occupancy of {(metrics.mean_ward_occ / g.number_of_ward_beds):.1%}
-                        """
-                    )
-
-            col1c, col2c, col3c = st.columns(3)
-
-            # Add container with average admission delays per year
-            with col1c:
-                with iconMetricContainer(
-                    key="admission_delays",
-                    icon_unicode="f38c",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Average Admission Delays per Year",
-                        value=f"{metrics.admit_delay_yearly:,.0f}",
-                        border=True,
-                    )
-
-                    st.caption(
-                        f"""
-Range = {metrics.admit_delay_yearly_min} to {metrics.admit_delay_yearly_max} per year across runs.
-The average number of admissions that were delayed for the full model period
-of {metrics.sim_duration_display} were
-{metrics.df_trial_results["Number of Admission Delays"].mean():,.0f}.
-                        """
-                    )
-
-            # Add container with average duration of admission delays
-            with col2c:
-                with iconMetricContainer(
-                    key="admission_delay_average",
-                    icon_unicode="e425",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Average Ward Admission Delay Duration",
-                        value=f"""
-{g.trial_mean_q_time_ward[g.trials_run_counter]} hours
-                        """,
-                        border=True,
-                    )
-
-            # Add container with maximum duration of admission delay
-            with col3c:
-                with iconMetricContainer(
-                    key="admission_delay_max",
-                    icon_unicode="f377",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Maximum Ward Admission Delay Duration",
-                        value=f"""
-{g.trial_max_q_time_ward[g.trials_run_counter]} hours
-                        """,
-                        border=True,
-                    )
-
-                st.caption("""
-This looks at the maximum delay seen across all model runs
-                """)
-
-            col1d, col2d = st.columns(2)
-
-            # Add container with average duration of nurse triage delay
-            with col1d:
-                with iconMetricContainer(
-                    key="nurse_delay_average",
-                    icon_unicode="e425",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Average Nurse Triage Delay Duration",
-                        value=f"""
-{g.trial_mean_q_time_nurse[g.trials_run_counter]} minutes
-                        """,
-                        border=True,
-                    )
-
-            # Add container with maximum duration of nurse triage delay
-            with col2d:
-                with iconMetricContainer(
-                    key="nurse_delay_max",
-                    icon_unicode="f377",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Maximum Nurse Triage Delay Duration",
-                        value=f"""
-{g.trial_max_q_time_nurse[g.trials_run_counter]} minutes
-                        """,
-                        border=True,
-                    )
-
-                st.caption("""
-This looks at the maximum delay seen across all model runs
-                """)
-
-            col1e, col2e = st.columns(2)
-
-            # Add container with patients outside SDEC
-            # operating hours
-            with col1e:
-                with iconMetricContainer(
-                    key="arrive_outside_sdec_operating_hours",
-                    icon_unicode="e14b",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="""
-Average Patients Outside of SDEC Operating Hours
-                        """,
-                        # value=f"{patients_outside_sdec_operating_hours_per_year:.0f} of {average_patients_per_year:.0f} ({(patients_outside_sdec_operating_hours_per_year / average_patients_per_year):.1%})",
-                        value=f"""
-{metrics.patients_outside_sdec_operating_hours_per_year:.0f} of
-{metrics.average_patients_per_year:.0f}
-({(metrics.patients_outside_sdec_operating_hours_per_year / metrics.average_patients_per_year):.1%})
-                        """,
-                        border=True,
-                    )
+                # Add container with maximum duration of nurse triage delay
+                with col2d:
+                    with iconMetricContainer(
+                        key="nurse_delay_max",
+                        icon_unicode="f377",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Maximum Nurse Triage Delay Duration",
+                            value=f"""
+    {g.trial_max_q_time_nurse[g.trials_run_counter]} minutes
+                            """,
+                            border=True,
+                        )
 
                     st.caption("""
-This looks at the average count of patients who were unable to be routed to
-SDEC after their CT or CTP scan due to SDEC being shut.
+    This looks at the maximum delay seen across all model runs
                     """)
 
-            with col2e:
-                with iconMetricContainer(
-                    key="arrive_sdec_is_full",
-                    icon_unicode="e7ef",
-                    family="outline",
-                    icon_color="black",
-                    type="symbols",
-                ):
-                    st.metric(
-                        label="Average Patients Bypassing SDEC Due to it Being Full",
-                        value=f"""
-{metrics.sdec_full_per_year:.0f} of
-{metrics.patients_inside_sdec_operating_hours_per_year:.0f}
-({(metrics.sdec_full_per_year / metrics.patients_inside_sdec_operating_hours_per_year):.1%})
-""",
-                        border=True,
-                    )
+                col1e, col2e = st.columns(2)
 
-                    st.caption(f"""
-This looks at the average count across all runs of patients arriving in SDEC
-during its open hours who had to be routed directly to a ward due to the SDEC
-being full. Range across runs = {metrics.sdec_full_per_year_min:.0f} to {metrics.sdec_full_per_year_max:.0f} patients per year.
-                    """)
+                # Add container with patients outside SDEC
+                # operating hours
+                with col1e:
+                    with iconMetricContainer(
+                        key="arrive_outside_sdec_operating_hours",
+                        icon_unicode="e14b",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="""
+    Average Patients Outside of SDEC Operating Hours
+                            """,
+                            # value=f"{patients_outside_sdec_operating_hours_per_year:.0f} of {average_patients_per_year:.0f} ({(patients_outside_sdec_operating_hours_per_year / average_patients_per_year):.1%})",
+                            value=f"""
+    {metrics.patients_outside_sdec_operating_hours_per_year:.0f} of
+    {metrics.average_patients_per_year:.0f}
+    ({(metrics.patients_outside_sdec_operating_hours_per_year / metrics.average_patients_per_year):.1%})
+                            """,
+                            border=True,
+                        )
 
-            st.subheader("Full Per-Run Results for Trial")
+                        st.caption("""
+    This looks at the average count of patients who were unable to be routed to
+    SDEC after their CT or CTP scan due to SDEC being shut.
+                        """)
 
-            st.dataframe(my_trial.df_trial_results.T)
+                with col2e:
+                    with iconMetricContainer(
+                        key="arrive_sdec_is_full",
+                        icon_unicode="e7ef",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Average Patients Bypassing SDEC Due to it Being Full",
+                            value=f"""
+    {metrics.sdec_full_per_year:.0f} of
+    {metrics.patients_inside_sdec_operating_hours_per_year:.0f}
+    ({(metrics.sdec_full_per_year / metrics.patients_inside_sdec_operating_hours_per_year):.1%})
+    """,
+                            border=True,
+                        )
 
-        with tab2:
-            generate_occupancy_plots(
-                my_trial=my_trial,
-                warm_up_duration_days=warm_up_duration_days,
-                sim_duration_days=sim_duration_days,
-            )
+                        st.caption(f"""
+    This looks at the average count across all runs of patients arriving in SDEC
+    during its open hours who had to be routed directly to a ward due to the SDEC
+    being full. Range across runs = {metrics.sdec_full_per_year_min:.0f} to {metrics.sdec_full_per_year_max:.0f} patients per year.
+                        """)
 
-        ##############################
-        #  MARK: Process Maps (DFGs) #
-        ##############################
-        with tab3:
-            plot_dfg_per_feature(
-                split_vars=split_vars,
-                patient_df=metrics.patient_df,
-            )
+                st.subheader("Full Per-Run Results for Trial")
 
-        with tab4:
-            ####################################
-            # MARK: Flexible Plot of Variables #
-            ####################################
-            plot_histogram(
-                patient_df=metrics.patient_df,
-                patient_level_metric_choices=patient_level_metric_choices,
-                split_vars=split_vars,
-            )
+                st.dataframe(my_trial.df_trial_results.T)
 
-            ####################################
-            # MARK: Heatmap                    #
-            ####################################
-            plot_time_heatmap(patient_df=metrics.patient_df, time_vars=time_vars)
+            with tab2:
+                generate_occupancy_plots(
+                    my_trial=my_trial,
+                    warm_up_duration_days=warm_up_duration_days,
+                    sim_duration_days=sim_duration_days,
+                )
 
-        #########################
-        # MARK: Animation       #
-        #########################
-        with tab5:
-            # This needs to receive the full dataframe, including patients
-            # generated before the warm-up period elapsed
-            # st.write("Event Log")
-            # st.write(event_log)
-            # st.plotly_chart(
-            #     create_vidigi_animation_advanced(event_log, scenario=g())
-            # )
+            ##############################
+            #  MARK: Process Maps (DFGs) #
+            ##############################
+            with tab3:
+                plot_dfg_per_feature(
+                    split_vars=split_vars,
+                    patient_df=metrics.patient_df,
+                )
 
-            # st.write(create_vidigi_animation(event_log, scenario=g()))
-            st.write("Coming Soon!")
+            with tab4:
+                ####################################
+                # MARK: Flexible Plot of Variables #
+                ####################################
+                plot_histogram(
+                    patient_df=metrics.patient_df,
+                    patient_level_metric_choices=patient_level_metric_choices,
+                    split_vars=split_vars,
+                )
 
-        with tab6:
-            render_run_manager()
-            render_scenario_manager()
+                ####################################
+                # MARK: Heatmap                    #
+                ####################################
+                plot_time_heatmap(patient_df=metrics.patient_df, time_vars=time_vars)
+
+            #########################
+            # MARK: Animation       #
+            #########################
+            with tab5:
+                # This needs to receive the full dataframe, including patients
+                # generated before the warm-up period elapsed
+                # st.write("Event Log")
+                # st.write(event_log)
+                # st.plotly_chart(
+                #     create_vidigi_animation_advanced(event_log, scenario=g())
+                # )
+
+                # st.write(create_vidigi_animation(event_log, scenario=g()))
+                st.write("Coming Soon!")
+
+            refresh_runs_display()
+
+with scenario_comparison_tab:
+    render_run_manager()
+    render_scenario_manager()
