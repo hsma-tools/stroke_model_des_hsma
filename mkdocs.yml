@@ -52,6 +52,8 @@ nav:
     - Patient: patient.md
     - Model: model.md
     - Trial: trial.md
+    - Metrics: metrics.md
+    - Metrics Snapshot: metricsSnapshot.md
   - Model Details:
     - Pathway Diagram: pathway_diagram.md
     - STRESS DES Checklist: stress_des.md
