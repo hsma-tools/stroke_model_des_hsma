@@ -472,6 +472,7 @@ class Model:
             if self.env.now > g.warm_up_period:
                 self.sdec_freeze_counter += 1
 
+    # MARK: M: Set patient attributes #
     def set_patient_attributes(self, patient):
         """
         Sets a series of randomised per-patient attributes
@@ -997,46 +998,28 @@ class Model:
             # This code add information regarding the patients admission avoidance.
 
             if patient.admission_avoidance == True and patient.patient_diagnosis < 2:
-                # Update savings value in model results
-                if self.env.now > g.warm_up_period:
-                    self.results_df.at[patient.id, "Admission Avoidance"] = (
-                        patient.sdec_pathway
-                    )
-
-                    last_index = self.results_df["SDEC Savings"].last_valid_index()
-                    last_value = self.results_df.loc[last_index, "SDEC Savings"]
-                    if last_index > 0 and pd.notnull:
-                        self.results_df.at[patient.id, "SDEC Savings"] = (
-                            last_value + g.inpatient_bed_cost
-                        )
-
-                    else:
-                        self.results_df.at[patient.id, "SDEC Savings"] = (
-                            g.inpatient_bed_cost
-                        )
-
                 # Regardless of whether the warm-up has passed, recording in
                 # patient object that this patient's journey was completed
                 patient.exit_time = self.env.now
                 patient.journey_completed = True
 
                 # Patients with a True admission avoidance are added to a list
-                # that is used to calculate the savings from the avoided admissions.
+                # that is used to calculate the savings from the avoided admissions
+                # (only if outside of the warm-up period)
                 if (
                     patient.admission_avoidance == True
-                    and patient.patient_diagnosis < 2
                     and self.env.now > g.warm_up_period
                 ):
                     self.admission_avoidance.append(patient)
 
-                # This code exists after the admission avoidance code so they
-                # are not added to the admission avoidance list, as that should
-                # only be for SDEC patients who avoid admission.
-                # This code ensures that these patients get an exit time
+            # This code exists after the admission avoidance code so they
+            # are not added to the admission avoidance list, as that should
+            # only be for SDEC patients who avoid admission.
+            # This code ensures that these patients get an exit time
 
-                if patient.non_admitted_tia_ns_sm == True:
-                    patient.exit_time = self.env.now
-                    patient.journey_completed = True
+            if patient.non_admitted_tia_ns_sm == True:
+                patient.exit_time = self.env.now
+                patient.journey_completed = True
 
         ###############################################
         # MARK: SDEC Full or closed
