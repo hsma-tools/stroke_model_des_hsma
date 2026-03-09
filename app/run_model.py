@@ -626,8 +626,8 @@ with new_run_tab:
     The average total savings for the full model period
     of {metrics.sim_duration_display} were
     £{metrics.df_trial_results["SDEC Savings (£)"].mean():,.0f}. This is
-    calculated as the total savings from running the SDEC, subtracting the
-    medical cost of running the SDEC. SDEC running costs are set to
+    calculated as the total savings from running the SDEC (average £{metrics.df_trial_results["Financial Savings of Admissions Avoidance (£)"].mean():,.0f}), subtracting the
+    medical cost of running the SDEC (£{metrics.df_trial_results["SDEC Medical Staff Cost (£)"].mean():,.0f}). SDEC running costs are set to
     £{(g.sdec_dr_cost_min * 60):.2f} per hour.
                         """)
 
@@ -696,8 +696,7 @@ with new_run_tab:
                             f"""
     Avoided admissions are those patients who were able to leave after being seen
     in SDEC, and would have had a full admission if the SDEC was not available.
-    Range = {metrics.avoid_yearly_min} to {metrics.avoid_yearly_max} per year across runs.
-
+    Range = {metrics.avoid_yearly_min:.0f} to {metrics.avoid_yearly_max:.0f} per year across runs.
     The average total number of admissions avoided for the full model period
     of {metrics.sim_duration_display} were
     {metrics.df_trial_results["Number of Admissions Avoided In Run"].mean():,.0f}.
@@ -746,6 +745,8 @@ with new_run_tab:
 
                         st.caption(
                             f"""
+    Delayed admissions are those where a patient is deemed to need admission but a ward bed is not
+    immediately available.
     Range = {metrics.admit_delay_yearly_min} to {metrics.admit_delay_yearly_max} per year across runs.
     The average number of admissions that were delayed for the full model period
     of {metrics.sim_duration_display} were
@@ -788,7 +789,7 @@ with new_run_tab:
                         )
 
                     st.caption("""
-    This looks at the maximum delay seen across all model runs
+    This looks at the maximum delay seen across all model runs.
                     """)
 
                 col1d, col2d = st.columns(2)
@@ -809,6 +810,10 @@ with new_run_tab:
                             """,
                             border=True,
                         )
+                    st.caption("""
+    Long delays at this point could potentially contribute to moving patients outside of the window in which
+    therapies like thrombolysis will be effective.
+                    """)
 
                 # Add container with maximum duration of nurse triage delay
                 with col2d:
@@ -844,9 +849,7 @@ with new_run_tab:
                         type="symbols",
                     ):
                         st.metric(
-                            label="""
-    Average Patients Outside of SDEC Operating Hours
-                            """,
+                            label="Average Patients Outside of SDEC Operating Hours",
                             # value=f"{patients_outside_sdec_operating_hours_per_year:.0f} of {average_patients_per_year:.0f} ({(patients_outside_sdec_operating_hours_per_year / average_patients_per_year):.1%})",
                             value=f"""
     {metrics.patients_outside_sdec_operating_hours_per_year:.0f} of
@@ -887,7 +890,14 @@ with new_run_tab:
 
                 st.subheader("Full Per-Run Results for Trial")
 
-                st.dataframe(my_trial.df_trial_results.T)
+                st.caption("Each column represents one run of the model.")
+
+                df_trial_results_transposed = my_trial.df_trial_results.T
+                df_trial_results_transposed.columns = (
+                    df_trial_results_transposed.columns + 1
+                )
+
+                st.dataframe(df_trial_results_transposed)
 
             with tab2:
                 generate_occupancy_plots(
