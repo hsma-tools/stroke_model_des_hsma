@@ -9,7 +9,7 @@ import pandas as pd
 from vidigi.prep import reshape_for_animations, generate_animation_df
 from vidigi.animation import generate_animation
 from vidigi.utils import EventPosition, create_event_position_df
-
+import streamlit as st
 
 # Fixed layout describing where each event should appear in the animation
 EVENT_POSITION_DF = create_event_position_df(
@@ -149,10 +149,10 @@ def convert_event_log(patient_df, run=1):
         "nurse_q_start_time": "queue",
         "nurse_triage_start_time": "resource_use",
         "nurse_triage_end_time": "resource_use_end",
-        "ct_scan_start_time": "resource_use",
-        "ct_scan_end_time": "resource_use_end",
-        "ctp_scan_start_time": "resource_use",
-        "ctp_scan_end_time": "resource_use_end",
+        "ct_scan_start_time": "queue",
+        "ct_scan_end_time": "queue",
+        "ctp_scan_start_time": "queue",
+        "ctp_scan_end_time": "queue",
         "sdec_admit_time": "resource_use",
         "sdec_discharge_time": "resource_use_end",
         "ward_q_start_time": "queue",
@@ -160,45 +160,21 @@ def convert_event_log(patient_df, run=1):
         "ward_discharge_time": "resource_use_end",
         "exit_time": "arrival_departure",
     }
-    times_df_long["event_type"] = times_df_long["event"].apply(
-        lambda x: event_map[x]
-    )
+    times_df_long["event_type"] = times_df_long["event"].apply(lambda x: event_map[x])
 
     # Extract resource assignments (nurse, SDEC bed, ward bed) per patient
-    resource_ids = run_df[
-        ["id", "nurse_attending_id", "sdec_bed_id", "ward_bed_id"]
-    ]
-    resource_ids = resource_ids.melt(
-        id_vars="id", value_name="resource_id"
-    )
+    resource_ids = run_df[["id", "nurse_attending_id", "sdec_bed_id", "ward_bed_id"]]
+    resource_ids = resource_ids.melt(id_vars="id", value_name="resource_id")
 
     # Map resource ID columns to the events where the resource is in use
     resource_mapping_df = pd.DataFrame(
         [
-            {
-                "variable": "nurse_attending_id",
-                "event": "nurse_triage_start_time"
-            },
-            {
-                "variable": "nurse_attending_id",
-                "event": "nurse_triage_end_time"
-            },
-            {
-                "variable": "sdec_bed_id",
-                "event": "sdec_admit_time"
-            },
-            {
-                "variable": "sdec_bed_id",
-                "event": "sdec_discharge_time"
-            },
-            {
-                "variable": "ward_bed_id",
-                "event": "ward_admit_time"
-            },
-            {
-                "variable": "ward_bed_id",
-                "event": "ward_discharge_time"
-            }
+            {"variable": "nurse_attending_id", "event": "nurse_triage_start_time"},
+            {"variable": "nurse_attending_id", "event": "nurse_triage_end_time"},
+            {"variable": "sdec_bed_id", "event": "sdec_admit_time"},
+            {"variable": "sdec_bed_id", "event": "sdec_discharge_time"},
+            {"variable": "ward_bed_id", "event": "ward_admit_time"},
+            {"variable": "ward_bed_id", "event": "ward_discharge_time"},
         ]
     )
 
@@ -229,6 +205,7 @@ def create_vidigi_animation(
     entity_col_name="id",
     gap_between_resource_rows=50,
     gap_between_resources=20,
+    limit_duration=None,
 ):
     """
     Build a vidigi animation figure from an event log and scenario settings.
@@ -271,12 +248,12 @@ def create_vidigi_animation(
             )
 
     # Calculate warm-up and plotting end times in simulation minutes
-    warm_up_threshold = (
-        scenario.warm_up_period + (scenario.sdec_opening_hour * 60)
-    )
-    limit_duration = (
-        (scenario.sim_duration / 12 / 2) + (scenario.sdec_opening_hour * 60)
-    )
+    warm_up_threshold = scenario.warm_up_period + (scenario.sdec_opening_hour * 60)
+
+    if limit_duration is None:
+        limit_duration = (scenario.sim_duration / 12 / 2) + (
+            scenario.sdec_opening_hour * 60
+        )
     limit_duration_inc_warmup = limit_duration + scenario.warm_up_period
 
     print(f"Limit duration: {limit_duration}")
@@ -288,21 +265,22 @@ def create_vidigi_animation(
         .rename(columns={"time": "latest_event_time"})
     )
 
+    print("Last event per ID - first 5 rows")
+    print(latest_event_per_id.head())
+
     # Identify patients whose activity extends beyond the warm-up period
     latest_event_per_id = latest_event_per_id[
         latest_event_per_id["latest_event_time"] >= warm_up_threshold
     ]
 
     print(
-        "Placement dataframe started construction at " +
-        f"{time.strftime('%H:%M:%S', time.localtime())}"
+        "Placement dataframe started construction at "
+        + f"{time.strftime('%H:%M:%S', time.localtime())}"
     )
     print(f"Before warm-up filtering: {len(event_log)} rows")
 
     # Exclude patients whose last event occurs before the warm-up period ends
-    event_log = event_log[
-        event_log["id"].isin(latest_event_per_id["id"].values)
-    ]
+    event_log = event_log[event_log["id"].isin(latest_event_per_id["id"].values)]
     print(f"After warm-up filtering: {len(event_log)} rows")
 
     # Create snapshot-level entity positions over time
@@ -314,14 +292,14 @@ def create_vidigi_animation(
         step_snapshot_max=step_snapshot_max,
     )
 
-    print("Full patient df (5 rows)")
-    print(full_patient_df.head())
-    print(f"Warm-up duration: {warm_up_threshold}")
-
     # Drop snapshots that occur before the warm-up period
     full_patient_df = full_patient_df[
         full_patient_df["snapshot_time"] >= warm_up_threshold
     ]
+
+    print("Full patient df (5 rows)")
+    print(full_patient_df.head())
+    print(f"Warm-up duration: {warm_up_threshold}")
 
     # Attach x–y positions and queue/resource layout for animation
     full_patient_df_plus_pos = generate_animation_df(
@@ -379,8 +357,41 @@ def create_vidigi_animation(
         debug_mode=True,
         resource_icon_size=15,
         text_size=20,
-        start_time=f"{scenario.sdec_opening_hour}:00:00",
+        # start_time=f"{scenario.sdec_opening_hour}:00:00",
         gap_between_resources=gap_between_resources,
     )
 
     return fig
+
+
+@st.fragment
+def display_animation(patient_df, scenario_class_instance, limit_duration):
+
+    selected_run = st.selectbox(
+        "Select a run",
+        options=list(range(1, max(patient_df.run) + 1)),
+        index=0,
+        key="select_run_animation",
+    )
+
+    generate_animation = st.button("Click to generate an animation of the system")
+
+    if generate_animation:
+        with st.spinner(
+            "Generating Animation (may take up to 5 minutes - please be patient!)",
+        ):
+            st.markdown("""
+🩸 = Intracerebral Haemorrhage (ICH) |
+⌚ = Ischaemic Stroke |
+➡️ = Transient Ischaemic Attack (TIA) |
+🪞 = Stroke Mimic |
+🚷 = Non Stroke |
+""")
+            event_log = convert_event_log(patient_df, run=selected_run)
+            return st.plotly_chart(
+                create_vidigi_animation(
+                    event_log,
+                    scenario=scenario_class_instance,
+                    limit_duration=limit_duration,
+                )
+            )

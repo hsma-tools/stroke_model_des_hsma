@@ -28,7 +28,7 @@ from scenario_comparison import (
     render_run_manager,
 )
 
-from convert_event_log import convert_event_log, create_vidigi_animation
+from animation import display_animation
 
 from plots import (
     plot_dfg_per_feature,
@@ -969,12 +969,11 @@ with new_run_tab:
                 # generated before the warm-up period elapsed
                 # st.write("Event Log")
                 # st.write(event_log)
-                # st.plotly_chart(
-                #     create_vidigi_animation_advanced(event_log, scenario=g())
-                # )
-
-                # st.write(create_vidigi_animation(event_log, scenario=g()))
-                st.write("Coming Soon!")
+                display_animation(
+                    patient_df=metrics.patient_df_including_warmup,
+                    scenario_class_instance=g(),
+                    limit_duration=60 * 24 * 28 * 1,
+                )
 
             refresh_runs_display()
 
