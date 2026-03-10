@@ -188,6 +188,7 @@ class Patient:
         self.non_admission = np.NaN
 
         self.advanced_ct_pathway = None
+        self.thrombolysis_enabled_by_ctp = None
         self.sdec_pathway = None
 
         self.thrombolysis = None

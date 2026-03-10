@@ -776,6 +776,9 @@ class Model:
         # the patient diagnosis, onset type and mrs type. There are different
         # conditions depending on if CTP is available or not.
 
+        # If CTP scanner is not available, only patients who have a known stroke onset time
+        # are eligible for thrombolysis. MRS must also be 1 or above (i.e. simplistically,
+        # some disability must be present for risk/benefit of thrombolysis to be worthwhile.)
         if (
             patient.patient_diagnosis == 1
             and patient.onset_type == 0
@@ -783,6 +786,8 @@ class Model:
         ):
             patient.thrombolysis = True
 
+        # If the CTP scanner is available, then patients with an unknown onset but within the thrombolysable
+        # window are considered eligible for thrombolysis. The same rules apply to the disability.
         elif (
             patient.patient_diagnosis == 1
             and patient.onset_type == 1
@@ -791,6 +796,7 @@ class Model:
         ):
             patient.thrombolysis = True
             self.additional_thrombolysis_from_ctp += 1
+            patient.thrombolysis_enabled_by_ctp = True
 
         else:
             patient.thrombolysis = False
@@ -1328,7 +1334,7 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.advanced_ct_pathway == True
+                            and patient.thrombolysis_enabled_by_ctp == True
                         ):
                             self.results_df.at[patient.id, "Thrombolysis Savings"] = (
                                 (
@@ -1386,7 +1392,7 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.advanced_ct_pathway == True
+                            and patient.thrombolysis_enabled_by_ctp == True
                         ):
                             self.results_df.at[patient.id, "Thrombolysis Savings"] = (
                                 (
@@ -1444,7 +1450,7 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.advanced_ct_pathway == True
+                            and patient.thrombolysis_enabled_by_ctp == True
                         ):
                             self.results_df.at[patient.id, "Thrombolysis Savings"] = (
                                 (
@@ -1502,7 +1508,7 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.advanced_ct_pathway == True
+                            and patient.thrombolysis_enabled_by_ctp == True
                         ):
                             self.results_df.at[patient.id, "Thrombolysis Savings"] = (
                                 (
@@ -1561,7 +1567,7 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.advanced_ct_pathway == True
+                            and patient.thrombolysis_enabled_by_ctp == True
                         ):
                             self.results_df.at[patient.id, "Thrombolysis Savings"] = (
                                 (
