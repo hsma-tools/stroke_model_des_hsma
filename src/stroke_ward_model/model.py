@@ -1018,6 +1018,11 @@ class Model:
                 ):
                     self.admission_avoidance.append(patient)
 
+                    # We also add their savings to the dataframe
+                    self.results_df.at[patient.id, "SDEC Savings"] = (
+                        g.inpatient_bed_cost * g.sdec_bed_day_saving
+                    )
+
             # This code exists after the admission avoidance code so they
             # are not added to the admission avoidance list, as that should
             # only be for SDEC patients who avoid admission.
@@ -1771,9 +1776,10 @@ class Model:
         # admission avoidance attributes and will ensure that only SDEC
         # patients who are explicitly benefitting from admission avoidance
         # via SDEC will be counted here
-        self.sdec_financial_savings = (
-            len(self.admission_avoidance) * g.inpatient_bed_cost
-        )
+        # self.sdec_financial_savings = (
+        #     len(self.admission_avoidance) * g.inpatient_bed_cost
+        # )
+        self.sdec_financial_savings = round(self.results_df["SDEC Savings"].sum(), 0)
 
         # The below code ensures that the SDEC incurs no cost if it is not
         # running at all in the model. This was introduced as a bug was causing

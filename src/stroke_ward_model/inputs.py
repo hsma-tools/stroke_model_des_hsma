@@ -101,6 +101,9 @@ class g:
         Percentage chance that a stroke mimic requires admission.
     sdec_dr_cost_min : float
         Cost per minute for SDEC doctor time.
+    sdec_bed_day_saving: float
+        The number of bed days an SDEC admission is assumed to save. This is used in calculating
+        the potential savings from SDEC usage.
     inpatient_bed_cost : float
         Cost of a standard inpatient bed stay, per day.
     inpatient_bed_cost_thrombolysis : float
@@ -188,11 +191,8 @@ class g:
     thrombolysis_los_save = 0.75
 
     sdec_dr_cost_min = 0.50
-    # TODO: SR: John, I assume these are costs per day?
-    # Can we explain where these values are taken from? Is it specific to a
-    # given trust? What year are these values calculated for?
-    inpatient_bed_cost = 876
-    inpatient_bed_cost_thrombolysis = 528.17
+    # how many inpatient days an SDEC admission is assumed to save.
+    sdec_bed_day_saving = 1.0
     mean_mrs = 2
 
     # Diagnosis % range
