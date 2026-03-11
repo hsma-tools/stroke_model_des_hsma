@@ -11,7 +11,7 @@ from vidigi.process_mapping import (
     add_sim_timestamp, discover_dfg, dfg_to_graphviz
 )
 
-from convert_event_log import convert_event_log
+from animation import convert_event_log
 
 
 def plot_occupancy(
@@ -402,8 +402,15 @@ def generate_occupancy_plots(
         st.subheader("Full Per-Run Results for Trial")
         st.dataframe(my_trial.df_trial_results.T)
 
-        st.subheader("ull Per-Patient Results for Trial (Including Warm-Up)")
+        st.subheader("Full Per-Patient Results for Trial (Including Warm-Up)")
+        st.caption("These values are drawn from patient objects")
         st.dataframe(my_trial.trial_patient_df)
+
+        st.subheader("Recorded Per-Patient Results for Trial (Excluding Warm-Up)")
+        st.caption(
+            "These values are recorded to the results dataframe tracking each patient"
+        )
+        st.dataframe(my_trial.trial_results_df)
 
         st.subheader("Ward Occupancy Audits")
         st.dataframe(my_trial.ward_occupancy_df)
