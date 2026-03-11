@@ -784,7 +784,14 @@ class Model:
             and patient.onset_type == 0
             and patient.mrs_type > 0
         ):
-            patient.thrombolysis = True
+            if (
+                self.thrombolysis_contraindication_chance.sample()
+                > g.probability_of_thrombolysis_contraindication
+            ):
+                patient.thrombolysis = True
+            else:
+                patient.thrombolysis = False
+                patient.thrombolysis_contraindicated = True
 
         # If the CTP scanner is available, then patients with an unknown onset but within the thrombolysable
         # window are considered eligible for thrombolysis. The same rules apply to the disability.
@@ -794,9 +801,16 @@ class Model:
             and patient.advanced_ct_pathway == True
             and patient.mrs_type > 0
         ):
-            patient.thrombolysis = True
-            self.additional_thrombolysis_from_ctp += 1
-            patient.thrombolysis_enabled_by_ctp = True
+            if (
+                self.thrombolysis_contraindication_chance.sample()
+                > g.probability_of_thrombolysis_contraindication
+            ):
+                patient.thrombolysis = True
+                self.additional_thrombolysis_from_ctp += 1
+                patient.thrombolysis_enabled_by_ctp = True
+            else:
+                patient.thrombolysis = False
+                patient.thrombolysis_contraindicated = True
 
         else:
             patient.thrombolysis = False

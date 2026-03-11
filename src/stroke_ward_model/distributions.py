@@ -4,7 +4,7 @@ Initialises and manages random distributions used throughout the simulation.
 
 import numpy as np
 import pandas as pd
-from sim_tools.distributions import Exponential, Normal, DiscreteEmpirical
+from sim_tools.distributions import Exponential, Normal, DiscreteEmpirical, Uniform
 from typing import Optional
 from numpy.random import SeedSequence
 
@@ -310,4 +310,8 @@ def initialise_distributions(self):
         values=[0, 1, 2],
         freq=[1, 1, 1],
         random_seed=seeds[31],
+    )
+
+    self.thrombolysis_contraindication_chance = Uniform(
+        low=0, high=1, random_seed=seeds[32]
     )

@@ -181,6 +181,23 @@ class g:
     mean_n_non_stroke_ward_time = 1440 * 3  # 4320
     mean_n_tia_ward_time = 1440 * 1
 
+    # For each patient who is considered for thrombolysis (because onset window known, or because
+    # onset window unknown but CTP scan is available and shows saveable brain), what is the chance
+    # that they will not be treated with thrombolysis due to absolute or relative
+    # contraindications (e.g. mild stroke symptoms and/or symptoms that are already improving,
+    # previous stroke within a certain  time period, severe uncontrolled hypertension, dementia,
+    # pregnancy, recently taken certain oral anticoagulants,
+    # previous use of thrombolysis for other conditions within a given time period,
+    # arriving later in thrombolysable window)
+    # See https://pmc.ncbi.nlm.nih.gov/articles/PMC9323435/ which found that 47% of patients
+    # who had a known onset <4.5 hours ago were not treated with thrombolysis, with 26% having
+    # absolute contraindication and 74% having relative contraindication
+    # and https://pmc.ncbi.nlm.nih.gov/articles/PMC9890612/
+    # and https://www.ncbi.nlm.nih.gov/books/NBK557411/
+    # This estimate may be updated if exact data is available, but is currently felt to be
+    # a reasonable estimate for a high-thrombolysing hospital (who may be more likely to thrombolyse
+    # in face of relative contraindications or may have patient mix with fewer absolute contraindications)
+    probability_of_thrombolysis_contraindication = 0.4
     thrombolysis_los_save = 0.75
 
     sdec_dr_cost_min = 0.50
@@ -234,11 +251,12 @@ class g:
     ooh_start = 0
 
     # Setting of relative frequencies of onsets
-
+    # Approximation based on https://strokeaudit.org/SupportFiles/Documents/Posters-and-oral-presentations/2020/ESOC-2020-Onset-to-arrival-times_Poster.aspx#:~:text=Of%20433%2C209%20patients%20admitted%20to,75%5D%20(figure%202).
     in_hours_known_onset = 0.7
     in_hours_unknown_onset_inside_ctp = 0.15
     in_hours_unknown_onset_outside_ctp = 0.15
-
+    # This is presumed to be lower due to wake-up strokes being the primary strokes occurring overnight
+    # Awaiting better data at which point this should be reparameterised.
     out_of_hours_known_onset = 0.2
     out_of_hours_unknown_onset_inside_ctp = 0.4
     out_of_hours_unknown_onset_outside_ctp = 0.4

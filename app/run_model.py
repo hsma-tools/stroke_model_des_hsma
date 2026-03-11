@@ -283,6 +283,32 @@ out-of-hours?
     st.divider()
 
     ###############################
+    # MARK: Treatment params      #
+    ###############################
+
+    st.subheader("Treatment parameters")
+
+    probability_not_thrombolysed = st.number_input(
+        "What is the probability that an ischaemic stroke patient will not be thrombolysed due to contraindications?",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.4,
+        help="""
+        This is the probability that a patient who has a known onset time, or for whom a CTP
+        scan shows salvageable tissue, will not be given thrombolysis due to contraindications
+        such as mild stroke symptoms and/or symptoms that are already improving, previous stroke
+        within a certain time period, severe uncontrolled hypertension, dementia, pregnancy,
+        recently taken certain oral anticoagulants, or previous use of thrombolysis for other
+        conditions within a given time period.
+
+        A probability of 0.4 means that 40% of patients (4 in 10) are assumed to have
+        contraindications.
+        """,
+    )
+
+    g.probability_of_thrombolysis_contraindication = probability_not_thrombolysed
+
+    ###############################
     # MARK: Cost params           #
     ###############################
 
@@ -933,16 +959,19 @@ with new_run_tab:
                             label="Thrombolysis Rate",
                             value=f"""
     {metrics.thrombolysis_rate:.1%}
-    ({metrics.thrombolysed:.0f} of {metrics.eligible_for_thrombolysis_per_year:.0f})
+    ({metrics.thrombolysed:.0f} of {metrics.eligible_for_thrombolysis_per_year:.0f} strokes)
     """,
                             border=True,
                         )
 
                         st.caption(f"""
-    On average per year, {metrics.thrombolysed_per_year:.0f} patients were thrombolysed of {metrics.eligible_for_thrombolysis_per_year:.0f} 'eligible' patients.
-    Note that SSNAP takes both ischaemic strokes and intracranial haemhorrhage strokes (ICH) as part of the denominator, despite ICH patients
-    being ineligible for thrombolysis treatment in practice.
-                        """)
+    On average per year, {metrics.thrombolysed_per_year:.0f} patients were thrombolysed of
+    {metrics.eligible_for_thrombolysis_per_year:.0f} 'eligible' patients, of whom
+    {metrics.extra_throm_yearly:.0f} were able to be thrombolysed due to the use of CTP scanning.
+    Note that SSNAP takes both ischaemic strokes and intracranial haemhorrhage strokes (ICH) as
+    part of the denominator, despite ICH patients being ineligible for thrombolysis treatment
+    in practice.
+    """)
 
                 with col1g:
                     with iconMetricContainer(
@@ -953,9 +982,9 @@ with new_run_tab:
                         type="symbols",
                     ):
                         st.metric(
-                            label="Thrombolysis Rate without CTP Scanner",
+                            label="Thrombolysis Rate without CTP Scanning",
                             value=f"""
-    {metrics.thrombolysis_rate_without_ctp:.1%}
+    {metrics.thrombolysis_rate_without_ctp:.1%} ({(metrics.thrombolysed - metrics.extra_throm_yearly):.0f} of {metrics.eligible_for_thrombolysis_per_year:.0f} strokes)
     """,
                             border=True,
                         )
