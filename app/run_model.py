@@ -662,7 +662,9 @@ with new_run_tab:
     of {metrics.sim_duration_display} were
     £{metrics.df_trial_results["Thrombolysis Savings (£)"].mean():,.0f}.
     This looks only at savings from patients who were able to be offered thrombolysis
-    due to the enhanced capabilities of the CTP scanner.
+    due to the enhanced capabilities of the CTP scanner. These are patients arriving
+    outside of the traditional thrombolysable window but found to still have salvageable
+    brain tissue that warrants thrombolytic treatment, or who
     """)
 
                 with col2a:
@@ -686,6 +688,7 @@ with new_run_tab:
     calculated as the total savings from running the SDEC (average £{metrics.df_trial_results["Financial Savings of Admissions Avoidance (£)"].mean():,.0f}), subtracting the
     medical cost of running the SDEC (£{metrics.df_trial_results["SDEC Medical Staff Cost (£)"].mean():,.0f}). SDEC running costs are set to
     £{(g.sdec_dr_cost_min * 60):.2f} per hour.
+    The total number of bed days saved from SDEC use is estimated to be {(g.sdec_bed_day_saving * metrics.avoid_yearly):.1f} per year (an average of {g.sdec_bed_day_saving:.2f} days per avoided admission).
                         """)
 
                 with col3a:
@@ -779,7 +782,9 @@ with new_run_tab:
 
                         st.caption(
                             f"""
-    This is an average occupancy of {(metrics.mean_ward_occ / g.number_of_ward_beds):.1%}
+    This is an average occupancy of {(metrics.mean_ward_occ / g.number_of_ward_beds):.1%}.
+    Studies suggest occupancy rates may need to be below 75% for a bed to be available 90-95%
+    of the time ([Source](https://arc-swp.nihr.ac.uk/wp/wp-content/uploads/2021/01/ESOC-2016-Poster-3-Stroke-Beds.pdf))
                             """
                         )
 
