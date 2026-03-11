@@ -223,7 +223,7 @@ in-hours?
         """,
         min_value=1.0,
         max_value=5000.0,
-        value=200.0,
+        value=167.5,
     )
 
     out_of_hours_demand_start = st.time_input(
@@ -239,7 +239,7 @@ out-of-hours?
         """,
         min_value=1.0,
         max_value=5000.0,
-        value=666.67,
+        value=358.00,
     )
 
     # Calculate shift durations (handling midnight wrap-around)
@@ -435,9 +435,9 @@ with new_run_tab:
             tab1, tab2, tab3, tab4, tab5 = st.tabs(
                 [
                     "Overview",
-                    "Output Graphs",
+                    "Occupancy Graphs",
                     "Process Maps",
-                    "Model Exploration",
+                    "Additional Graphs and Tables",
                     "Animation",
                 ]
             )

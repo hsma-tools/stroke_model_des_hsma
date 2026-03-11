@@ -147,15 +147,11 @@ class g:
     # 525600 (Year of Minutes)
     sim_duration = 525600
     number_of_runs = 10
+    # TODO - consider setting the default as a fixed number of minutes
     warm_up_period = sim_duration / 5
 
-    # TODO: SR query: confirm with John in case this was done in this way for
-    # a particular reason, but I've swapped it to a more intuitive use and
-    # something that will allow for setting via the app interface too
-    # patient_inter_day = 5
-    # patient_inter_night = 5
-    patient_inter_day = 200.0
-    patient_inter_night = 666.666666666667
+    patient_inter_day = 167.5  # 189.0
+    patient_inter_night = 358.00  # 247.00
 
     number_of_nurses = 2
     number_of_ctp = 1
@@ -167,9 +163,6 @@ class g:
     mean_n_sdec_time = 240
 
     # Different variables for ward stay based on diagnosis, thrombolysis and MRS
-    # TODO: SR - how are these determined? Assume historical data?
-    # TODO: SR - what is suspected reason for MRS of 1 having lower LOS than MRS of 0 whether ICH or I?
-
     mean_n_i_ward_time_mrs_0 = 1440 * 2.88
     mean_n_i_ward_time_mrs_1 = 1440 * 4.54
     mean_n_i_ward_time_mrs_2 = 1440 * 7.4
@@ -193,6 +186,20 @@ class g:
     sdec_dr_cost_min = 0.50
     # how many inpatient days an SDEC admission is assumed to save.
     sdec_bed_day_saving = 1.0
+
+    # daily cost for bed days
+    # taken from https://www.england.nhs.uk/london/wp-content/uploads/sites/8/2019/09/acute-commissioning-and-tariff-guidance.pdf
+    # adjusted for inflation using bank of england calculator
+    # This value will be used for SDEC savings
+    inpatient_bed_cost = (
+        819.53  # £633 HASU component in 2019 --> £818.53 in January 2026
+    )
+    # This value will be used for thrombolysis savings
+    inpatient_bed_cost_thrombolysis = (
+        491.38  # £380 less-acute bed day rate for 2019 --> £491.38 in January 2026
+    )
+
+    # Average modified rankin scale score for patients arriving
     mean_mrs = 2
 
     # Diagnosis % range
