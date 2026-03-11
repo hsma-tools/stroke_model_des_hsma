@@ -919,6 +919,52 @@ with new_run_tab:
     being full. Range across runs = {metrics.sdec_full_per_year_min:.0f} to {metrics.sdec_full_per_year_max:.0f} patients per year.
                         """)
 
+                col1f, col1g = st.columns(2)
+
+                with col1f:
+                    with iconMetricContainer(
+                        key="thrombolysis_rate",
+                        icon_unicode="e133",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Thrombolysis Rate",
+                            value=f"""
+    {metrics.thrombolysis_rate:.1%}
+    ({metrics.thrombolysed:.0f} of {metrics.eligible_for_thrombolysis_per_year:.0f})
+    """,
+                            border=True,
+                        )
+
+                        st.caption(f"""
+    On average per year, {metrics.thrombolysed_per_year:.0f} patients were thrombolysed of {metrics.eligible_for_thrombolysis_per_year:.0f} 'eligible' patients.
+    Note that SSNAP takes both ischaemic strokes and intracranial haemhorrhage strokes (ICH) as part of the denominator, despite ICH patients
+    being ineligible for thrombolysis treatment in practice.
+                        """)
+
+                with col1g:
+                    with iconMetricContainer(
+                        key="thrombolysis_rate_without_ctp",
+                        icon_unicode="e133",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Thrombolysis Rate without CTP Scanner",
+                            value=f"""
+    {metrics.thrombolysis_rate_without_ctp:.1%}
+    """,
+                            border=True,
+                        )
+
+                        st.caption(f"""
+    Without the additional patients able to be thrombolysed due to the use of the CTP scanner,
+    this would be the thrombolysis rate of the ward in the simulation.
+                        """)
+
                 st.subheader("Full Per-Run Results for Trial")
 
                 st.caption("Each column represents one run of the model.")
