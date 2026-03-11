@@ -663,8 +663,10 @@ with new_run_tab:
     £{metrics.df_trial_results["Thrombolysis Savings (£)"].mean():,.0f}.
     This looks only at savings from patients who were able to be offered thrombolysis
     due to the enhanced capabilities of the CTP scanner. These are patients arriving
-    outside of the traditional thrombolysable window but found to still have salvageable
-    brain tissue that warrants thrombolytic treatment, or who
+    outside of the traditional thrombolysable window or without a known onset time, but who are
+    found to still have salvageable brain tissue via CTP scanning that warrants thrombolytic treatment.
+    The cost of thrombolysis drugs are not taken into account due to reimbursement policies meaning
+    individual hospitals will not incur increased costs from appropriate use of thrombolytic drugs.
     """)
 
                 with col2a:
