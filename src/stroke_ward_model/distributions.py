@@ -11,6 +11,43 @@ from numpy.random import SeedSequence
 from stroke_ward_model.inputs import g
 
 
+def sample_within_bounds(
+    self,
+    minimum: Optional[float] = None,
+    maximum: Optional[float] = None,
+) -> float:
+    """
+    Sample from the exponential distribution until a value falls within bounds.
+
+    Parameters
+    ----------
+    minimum : Optional[float], default=None
+        The lower bound (inclusive). If None, no lower bound is applied.
+    maximum : Optional[float], default=None
+        The upper bound (inclusive). If None, no upper bound is applied.
+
+    Returns
+    -------
+    float
+        A single sample that falls within [minimum, maximum].
+    """
+    if minimum is not None and maximum is not None and minimum > maximum:
+        raise ValueError(
+            f"minimum ({minimum}) must be less than or equal to maximum ({maximum})"
+        )
+
+    while True:
+        value = self.sample()
+        below_max = maximum is None or value <= maximum
+        above_min = minimum is None or value >= minimum
+        if below_max and above_min:
+            return value
+
+
+# Bind the modified sampling class to the exponentia distribution
+Exponential.sample_within_bounds = sample_within_bounds
+
+
 class NSPPThinningModified:
     """
     MODIFIED FROM SIM_TOOLS TO HANDLE BOUNDARY BUG

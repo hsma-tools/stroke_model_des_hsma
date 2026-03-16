@@ -1175,10 +1175,9 @@ class Model:
                 ###############################
 
                 if patient.patient_diagnosis == 0 and patient.mrs_type == 0:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_0
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_0_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_0_dist.sample_within_bounds(minimum=1)
+                    )
                     patient.mrs_discharge = patient.mrs_type
                     trace(
                         time=self.env.now,
@@ -1193,10 +1192,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 0 and patient.mrs_type == 1:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_1
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_1_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_1_dist.sample_within_bounds(minimum=1)
+                    )
                     # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                     patient.mrs_discharge = (
                         patient.mrs_type - self.mrs_reduction_during_stay.sample()
@@ -1214,10 +1212,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 0 and patient.mrs_type == 2:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_2
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_2_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_2_dist.sample_within_bounds(minimum=1)
+                    )
                     # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                     patient.mrs_discharge = (
                         patient.mrs_type - self.mrs_reduction_during_stay.sample()
@@ -1235,10 +1232,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 0 and patient.mrs_type == 3:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_3
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_3_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_3_dist.sample_within_bounds(minimum=1)
+                    )
                     # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                     patient.mrs_discharge = (
                         patient.mrs_type - self.mrs_reduction_during_stay.sample()
@@ -1256,10 +1252,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 0 and patient.mrs_type == 4:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_4
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_4_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_4_dist.sample_within_bounds(minimum=1)
+                    )
                     # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                     patient.mrs_discharge = (
                         patient.mrs_type - self.mrs_reduction_during_stay.sample()
@@ -1277,10 +1272,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 0 and patient.mrs_type == 5:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_5
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_5_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_5_dist.sample_within_bounds(minimum=1)
+                    )
                     # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                     patient.mrs_discharge = (
                         patient.mrs_type - self.mrs_reduction_during_stay.sample()
@@ -1310,10 +1304,9 @@ class Model:
                 # LOS and associated savings accordingly.
 
                 if patient.patient_diagnosis == 1 and patient.mrs_type == 0:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_0
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_0_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_0_dist.sample_within_bounds(minimum=1)
+                    )
                     patient.mrs_discharge = patient.mrs_type
                     trace(
                         time=self.env.now,
@@ -1328,10 +1321,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 1 and patient.mrs_type == 1:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_1
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_1_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_1_dist.sample_within_bounds(minimum=1)
+                    )
                     if patient.thrombolysis == True:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
@@ -1355,16 +1347,24 @@ class Model:
                             self.env.now > g.warm_up_period
                             and patient.thrombolysis_enabled_by_ctp == True
                         ):
-                            self.results_df.at[patient.id, "Thrombolysis Savings"] = (
-                                (
+                            if g.short_term_thrombolysis_savings:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = (
                                     (
-                                        sampled_ward_act_time
-                                        - sampled_ward_act_time_thrombolysis
+                                        (
+                                            sampled_ward_act_time
+                                            - sampled_ward_act_time_thrombolysis
+                                        )
+                                        / 60
                                     )
-                                    / 60
-                                )
-                                / 24
-                            ) * g.inpatient_bed_cost_thrombolysis
+                                    / 24
+                                ) * g.inpatient_bed_cost_thrombolysis
+                            else:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = g.fixed_thrombolysis_saving_amount_long_term
+
                         patient.ward_discharge_time = self.env.now
                         self.ward_occupancy.remove(patient)
                     else:
@@ -1385,10 +1385,9 @@ class Model:
                         self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 1 and patient.mrs_type == 2:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_2
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_2_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_2_dist.sample_within_bounds(minimum=1)
+                    )
                     if patient.thrombolysis == True:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
@@ -1413,16 +1412,23 @@ class Model:
                             self.env.now > g.warm_up_period
                             and patient.thrombolysis_enabled_by_ctp == True
                         ):
-                            self.results_df.at[patient.id, "Thrombolysis Savings"] = (
-                                (
+                            if g.short_term_thrombolysis_savings:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = (
                                     (
-                                        sampled_ward_act_time
-                                        - sampled_ward_act_time_thrombolysis
+                                        (
+                                            sampled_ward_act_time
+                                            - sampled_ward_act_time_thrombolysis
+                                        )
+                                        / 60
                                     )
-                                    / 60
-                                )
-                                / 24
-                            ) * g.inpatient_bed_cost_thrombolysis
+                                    / 24
+                                ) * g.inpatient_bed_cost_thrombolysis
+                            else:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = g.fixed_thrombolysis_saving_amount_long_term
                         patient.ward_discharge_time = self.env.now
                         self.ward_occupancy.remove(patient)
                     else:
@@ -1443,10 +1449,9 @@ class Model:
                         self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 1 and patient.mrs_type == 3:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_3
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_3_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_3_dist.sample_within_bounds(minimum=1)
+                    )
                     if patient.thrombolysis == True:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
@@ -1471,16 +1476,23 @@ class Model:
                             self.env.now > g.warm_up_period
                             and patient.thrombolysis_enabled_by_ctp == True
                         ):
-                            self.results_df.at[patient.id, "Thrombolysis Savings"] = (
-                                (
+                            if g.short_term_thrombolysis_savings:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = (
                                     (
-                                        sampled_ward_act_time
-                                        - sampled_ward_act_time_thrombolysis
+                                        (
+                                            sampled_ward_act_time
+                                            - sampled_ward_act_time_thrombolysis
+                                        )
+                                        / 60
                                     )
-                                    / 60
-                                )
-                                / 24
-                            ) * g.inpatient_bed_cost_thrombolysis
+                                    / 24
+                                ) * g.inpatient_bed_cost_thrombolysis
+                            else:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = g.fixed_thrombolysis_saving_amount_long_term
                         patient.ward_discharge_time = self.env.now
                         self.ward_occupancy.remove(patient)
                     else:
@@ -1501,10 +1513,9 @@ class Model:
                         self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 1 and patient.mrs_type == 4:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_4
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_4_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_4_dist.sample_within_bounds(minimum=1)
+                    )
                     if patient.thrombolysis == True:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
@@ -1529,16 +1540,23 @@ class Model:
                             self.env.now > g.warm_up_period
                             and patient.thrombolysis_enabled_by_ctp == True
                         ):
-                            self.results_df.at[patient.id, "Thrombolysis Savings"] = (
-                                (
+                            if g.short_term_thrombolysis_savings:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = (
                                     (
-                                        sampled_ward_act_time
-                                        - sampled_ward_act_time_thrombolysis
+                                        (
+                                            sampled_ward_act_time
+                                            - sampled_ward_act_time_thrombolysis
+                                        )
+                                        / 60
                                     )
-                                    / 60
-                                )
-                                / 24
-                            ) * g.inpatient_bed_cost_thrombolysis
+                                    / 24
+                                ) * g.inpatient_bed_cost_thrombolysis
+                            else:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = g.fixed_thrombolysis_saving_amount_long_term
                         patient.ward_discharge_time = self.env.now
                         self.ward_occupancy.remove(patient)
                     else:
@@ -1559,10 +1577,9 @@ class Model:
                         self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 1 and patient.mrs_type == 5:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_5
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_5_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_5_dist.sample_within_bounds(minimum=1)
+                    )
                     if patient.thrombolysis == True:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
@@ -1588,16 +1605,23 @@ class Model:
                             self.env.now > g.warm_up_period
                             and patient.thrombolysis_enabled_by_ctp == True
                         ):
-                            self.results_df.at[patient.id, "Thrombolysis Savings"] = (
-                                (
+                            if g.short_term_thrombolysis_savings:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = (
                                     (
-                                        sampled_ward_act_time
-                                        - sampled_ward_act_time_thrombolysis
+                                        (
+                                            sampled_ward_act_time
+                                            - sampled_ward_act_time_thrombolysis
+                                        )
+                                        / 60
                                     )
-                                    / 60
-                                )
-                                / 24
-                            ) * g.inpatient_bed_cost_thrombolysis
+                                    / 24
+                                ) * g.inpatient_bed_cost_thrombolysis
+                            else:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = g.fixed_thrombolysis_saving_amount_long_term
                         patient.ward_discharge_time = self.env.now
                         self.ward_occupancy.remove(patient)
                     else:
@@ -1629,7 +1653,9 @@ class Model:
                     # sampled_ward_act_time = random.expovariate(
                     #     1.0 / g.mean_n_tia_ward_time
                     # )
-                    sampled_ward_act_time = self.tia_ward_time_dist.sample()
+                    sampled_ward_act_time = (
+                        self.tia_ward_time_dist.sample_within_bounds(minimum=1)
+                    )
                     trace(
                         time=self.env.now,
                         debug=g.show_trace,
@@ -1651,7 +1677,9 @@ class Model:
                     # sampled_ward_act_time = random.expovariate(
                     #     1.0 / g.mean_n_non_stroke_ward_time
                     # )
-                    sampled_ward_act_time = self.non_stroke_ward_time_dist.sample()
+                    sampled_ward_act_time = (
+                        self.non_stroke_ward_time_dist.sample_within_bounds(minimum=1)
+                    )
 
                     trace(
                         time=self.env.now,
