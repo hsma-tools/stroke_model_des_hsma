@@ -505,7 +505,9 @@ with new_run_tab:
                     ):
                         st.metric(
                             label="CTP scanners",
-                            value="Yes" if g.number_of_ctp > 0 else "No",
+                            value="Yes"
+                            if g.number_of_ctp > 0 or g.ctp_unav < 1440
+                            else "No",
                             border=True,
                         )
 
