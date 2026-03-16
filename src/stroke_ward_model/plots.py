@@ -9,6 +9,7 @@ class TrialPlots:
     """
     Create interactive visualisations from a stroke ward simulation trial.
     """
+
     def __init__(self, trial_object):
         """
         Initialise the TrialPlots object with trial results.

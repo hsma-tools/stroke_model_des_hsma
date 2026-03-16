@@ -11,6 +11,8 @@ from vidigi.process_mapping import add_sim_timestamp, discover_dfg, dfg_to_graph
 
 from animation import convert_event_log
 
+from stroke_ward_model.plots import TrialPlots
+
 
 def plot_occupancy(
     occupancy_df,
@@ -513,3 +515,23 @@ def plot_histogram(
                 facet_col="variable",
             )
         )
+
+
+@st.fragment
+def plot_arrivals_per_day_histogram(trial_object):
+
+    st.subheader("Arrivals Per Day")
+
+    selected_run = st.selectbox(
+        "Select a run",
+        options=list(range(1, max(trial_object.trial_patient_df.run) + 1)),
+        index=0,
+        key="run_select_arrivals_per_day_histogram",
+    )
+
+    trial_plots = TrialPlots(trial_object=trial_object)
+    results = trial_plots.plot_arrivals_per_day(run=selected_run)
+
+    st.plotly_chart(results["histogram"])
+
+    st.plotly_chart(results["timeseries"])

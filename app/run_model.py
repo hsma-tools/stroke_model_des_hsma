@@ -35,6 +35,7 @@ from plots import (
     generate_occupancy_plots,
     plot_histogram,
     plot_time_heatmap,
+    plot_arrivals_per_day_histogram,
 )
 
 
@@ -1082,6 +1083,11 @@ individual hospitals will not incur increased costs from appropriate use of thro
                 # MARK: Heatmap                    #
                 ####################################
                 plot_time_heatmap(patient_df=metrics.patient_df, time_vars=time_vars)
+
+                ###################################
+                # MARK: Arrivals Histogram        #
+                ###################################
+                plot_arrivals_per_day_histogram(trial_object=my_trial)
 
             #########################
             # MARK: Animation       #
