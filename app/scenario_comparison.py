@@ -18,6 +18,32 @@ SCENARIO_PARAMS = {
     "max_patients_per_run": ("Max Patients per Run", "patients"),
     "average_patients_per_year": ("Average Patients per Year", "patients"),
     "average_patients_per_day": ("Average Patients per Day", "patients"),
+    "therapy_sdec": ("Therapy available in SDEC?", "True/False"),
+    "thrombolysis_los_save": (
+        "LoS proportion for thrombolysed patient versus unthrombolysed",
+        "proportion",
+    ),
+    "sdec_dr_cost_min": ("SDEC staffing cost per minute", "£"),
+    "sdec_bed_day_saving": (
+        "Bed days assumed saved per admission avoidance through SDEC",
+        "days",
+    ),
+    "inpatient_bed_cost": (
+        "Cost per saved bed day (admission avoidance via SDEC)",
+        "£",
+    ),
+    "short_term_thrombolysis_savings": (
+        "Short-term (LoS-based) thrombolysis savings calculated?",
+        "True/False",
+    ),
+    "inpatient_bed_cost_thrombolysis": (
+        "Cost per saved bed day (thrombolysis LoS savings) - only used if looking at short-term thrombolysis savings",
+        "£",
+    ),
+    "fixed_thrombolysis_saving_amount_long_term": (
+        "Fixed saving from thrombolysis - only used if looking at long-term thrombolysis savings",
+        "£",
+    ),
 }
 
 # attr: (label, unit, is_key, icon, delta_color)
@@ -37,6 +63,20 @@ OUTCOME_PARAMS = {
         "patients",
         True,
         "e138",
+        "normal",
+    ),
+    "thrombolysis_rate": (
+        "Overall Thrombolysis Rate",
+        "patients",
+        True,
+        "e133",
+        "normal",
+    ),
+    "thrombolysis_rate_without_ctp": (
+        "Thrombolysis Rate (excluding patients enabled by CTP scanning)",
+        "patients",
+        False,
+        "e133",
         "normal",
     ),
     "avoid_yearly": ("Admissions Avoided per Year", "patients", True, "e0b6", "normal"),
