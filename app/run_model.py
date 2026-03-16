@@ -54,6 +54,7 @@ if "baseline_index" not in st.session_state:
 
 g.gen_graph = True
 
+st.title("Stroke Ward Model")
 
 #########################
 # MARK: Inputs          #
