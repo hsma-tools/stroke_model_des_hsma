@@ -220,7 +220,7 @@ class g:
 
     sdec_dr_cost_min = 0.50
     # how many inpatient days an SDEC admission is assumed to save.
-    sdec_bed_day_saving = 1.0
+    sdec_bed_day_saving = 2.0
 
     # daily cost for bed days
     # taken from https://www.england.nhs.uk/london/wp-content/uploads/sites/8/2019/09/acute-commissioning-and-tariff-guidance.pdf

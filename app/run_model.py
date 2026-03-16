@@ -308,6 +308,8 @@ out-of-hours?
 
     g.probability_of_thrombolysis_contraindication = probability_not_thrombolysed
 
+    st.divider()
+
     ###############################
     # MARK: Cost params           #
     ###############################
@@ -318,13 +320,13 @@ out-of-hours?
         "How many days on a hyperacute stroke ward is an admission avoided through SDEC assumed to save?",
         min_value=0.1,
         max_value=10.0,
-        value=1.0,
+        value=2.0,
     )
 
     g.sdec_bed_day_saving = sdec_day_savings
 
     hyperacute_bed_day_cost = st.number_input(
-        "What is the cost per bed day for a hyperacute stroke stay?",
+        "What is the cost per bed day for a hyperacute stroke stay? (£)",
         value=819.0,
         help="This will be used in calculations for the amount saved by using SDEC.",
     )
