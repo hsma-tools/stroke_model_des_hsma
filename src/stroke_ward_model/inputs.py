@@ -198,7 +198,25 @@ class g:
     # a reasonable estimate for a high-thrombolysing hospital (who may be more likely to thrombolyse
     # in face of relative contraindications or may have patient mix with fewer absolute contraindications)
     probability_of_thrombolysis_contraindication = 0.4
+
+    short_term_thrombolysis_savings = False
+
+    # If short_term_savings == True, will calculate thrombolysis savings by using an estimate of the cost
+    # of a stroke bed (making the assumption that the time saved comes from the time in the lower-cost SU,
+    # not HASU/ASU)
     thrombolysis_los_save = 0.75
+
+    # Alternatively, if short_term_savings == False, instead uses a provided value for expected savings.
+    # These could be to the NHS alone, or to society more widely. For example,
+    # https://www.strokeaudit.org/SupportFiles/Documents/Health-Economics/Health-economic-report-2016.aspx
+    # (2016) suggested that 5 year savings to the NHS could be in the region of £4100 per additional
+    # thrombolysed patient, and £6900 to social care (as well as 0.26 QALYs).
+    # The default for the long term savings figure is the £4100 multiplied by the
+    fixed_thrombolysis_saving_amount_long_term = 5679
+
+    # If fixed thrombolysis savings == True, will calculate thrombolysis savings by
+    # multiplying the number of additional patients thrombolysed through provision of the
+    # CTP scanner by the estimated savings per patient through administering thrombolysis
 
     sdec_dr_cost_min = 0.50
     # how many inpatient days an SDEC admission is assumed to save.

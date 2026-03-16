@@ -331,13 +331,32 @@ out-of-hours?
 
     g.inpatient_bed_cost = hyperacute_bed_day_cost
 
-    acute_bed_day_cost = st.number_input(
-        "What is the cost per bed day for an acute stroke stay?",
-        value=491.0,
-        help="This will be used in calculations for the amount saved by increased thrombolysis.",
+    short_term_thrombolysis_savings = st.radio(
+        "Calculate short-term or long-term savings of thrombolysis?",
+        options=["Short-term", "Long-term"],
+        index=1,
     )
 
-    g.inpatient_bed_cost_thrombolysis = acute_bed_day_cost
+    if short_term_thrombolysis_savings == "Short-term":
+        g.short_term_thrombolysis_savings = True
+        acute_bed_day_cost = st.number_input(
+            "What is the cost per bed day for the lower-acuity phase of a stroke stay? (£)",
+            value=491.0,
+            help="This will be used in calculations for the amount saved by increased thrombolysis.",
+        )
+
+        g.inpatient_bed_cost_thrombolysis = acute_bed_day_cost
+    else:
+        g.short_term_thrombolysis_savings = False
+        fixed_thrombolysis_saving_amount_long_term = st.number_input(
+            "What is the amount assumed to be saved per additional thrombolysed patient? (£)",
+            value=5679.0,
+        )
+        g.fixed_thrombolysis_saving_amount_long_term = (
+            fixed_thrombolysis_saving_amount_long_term
+        )
+
+    st.divider()
 
     ###############################
     # MARK: Advanced model params #
@@ -652,22 +671,39 @@ with new_run_tab:
                         type="symbols",
                     ):
                         st.metric(
-                            label="Average Thrombolysis Savings per Year",
+                            label="Average Thrombolysis Savings per Year"
+                            if g.short_term_thrombolysis_savings
+                            else "Average Thrombolysis Savings for Patients Treated per Year",
                             value=f"£{throm_yearly_save:,.0f}",
                             border=True,
                         )
 
-                        st.caption(f"""
-    The average total savings for the full model period
-    of {metrics.sim_duration_display} were
-    £{metrics.df_trial_results["Thrombolysis Savings (£)"].mean():,.0f}.
-    This looks only at savings from patients who were able to be offered thrombolysis
-    due to the enhanced capabilities of the CTP scanner. These are patients arriving
-    outside of the traditional thrombolysable window or without a known onset time, but who are
-    found to still have salvageable brain tissue via CTP scanning that warrants thrombolytic treatment.
-    The cost of thrombolysis drugs are not taken into account due to reimbursement policies meaning
-    individual hospitals will not incur increased costs from appropriate use of thrombolytic drugs.
-    """)
+                        if g.short_term_thrombolysis_savings:
+                            additional_text_thrombolysis_caption = f"""
+Thrombolysis savings look at the cost per lower-acuity bed day (£{g.inpatient_bed_cost_thrombolysis:.2f})
+multiplied by the number of bed days estimated to be saved per patient. Thrombolysis is estimated
+to reduce the length of stay to {g.thrombolysis_los_save:.1%} of what it would otherwise be.
+"""
+                        else:
+                            additional_text_thrombolysis_caption = f"""
+Thrombolysis savings use a fixed longer-term saving of £{g.fixed_thrombolysis_saving_amount_long_term:,.2f} per patient.
+    """
+
+                        st.caption(
+                            f"""
+The average total savings for the full model period
+of {metrics.sim_duration_display} were
+£{metrics.df_trial_results["Thrombolysis Savings (£)"].mean():,.0f}.
+
+This looks only at savings from patients who were able to be offered thrombolysis
+due to the enhanced capabilities of the CTP scanner. These are patients arriving
+outside of the traditional thrombolysable window or without a known onset time, but who are
+found to still have salvageable brain tissue via CTP scanning that warrants thrombolytic treatment.
+The cost of thrombolysis drugs are not taken into account due to reimbursement policies meaning
+individual hospitals will not incur increased costs from appropriate use of thrombolytic drugs.
+    """
+                            + additional_text_thrombolysis_caption
+                        )
 
                 with col2a:
                     with iconMetricContainer(
