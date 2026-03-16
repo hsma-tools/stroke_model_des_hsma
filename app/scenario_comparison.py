@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 from stroke_ward_model.metrics import Metrics
 from app_utils import iconMetricContainer
-
+import numpy as np
 
 SCENARIO_PARAMS = {
     "sim_duration_days": ("Simulation Duration (days)", "days"),
@@ -264,6 +264,34 @@ def render_key_metric_cards(run, baseline):
                 )
 
 
+def render_full_comparison_table():
+    runs = st.session_state.metrics_runs
+    if not runs:
+        st.info("No runs saved yet.")
+        return
+
+    rows = []
+
+    for attr, (label, unit, *_) in {**SCENARIO_PARAMS, **OUTCOME_PARAMS}.items():
+        row = {"Metric": label, "Unit": unit}
+        for run in runs:
+            metrics = run["metrics"]
+            val = (
+                getattr(metrics, attr, None)
+                if isinstance(metrics, Metrics)
+                else metrics.values.get(attr)
+            )
+            row[run["label"]] = (
+                round(float(val), 1)
+                if val is not None and not (isinstance(val, float) and np.isnan(val))
+                else None
+            )
+        rows.append(row)
+
+    df = pd.DataFrame(rows).set_index(["Metric", "Unit"])
+    st.dataframe(df, use_container_width=True)
+
+
 @st.fragment
 def render_scenario_manager():
     runs = st.session_state.metrics_runs
@@ -279,6 +307,9 @@ def render_scenario_manager():
         return
 
     labels = [r["label"] for r in runs]
+
+    with st.expander("Click to view a full summary table of all runs"):
+        render_full_comparison_table()
 
     st.session_state.baseline_index = st.radio(
         "Baseline run",
@@ -298,12 +329,12 @@ def render_scenario_manager():
 
         render_key_metric_cards(run, baseline)
 
-        st.divider()
-
         with st.expander("Scenario Parameters", expanded=False):
             param_df = build_comparison_df(run, baseline, SCENARIO_PARAMS)
             st.dataframe(style_difference_column(param_df), width="stretch")
 
-        with st.expander("Outcomes", expanded=True):
+        with st.expander("Outcomes", expanded=False):
             outcome_df = build_comparison_df(run, baseline, OUTCOME_PARAMS)
             st.dataframe(style_difference_column(outcome_df), width="stretch")
+
+        st.divider()
