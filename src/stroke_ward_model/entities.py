@@ -65,6 +65,10 @@ class Patient:
         Whether the patient is routed through SDEC.
     thrombolysis : bool or None
         Whether the patient receives thrombolysis.
+    thrombolysis_contraindicated : bool or None
+        Whether a patient who has a known onset within a thrombolysable period, or has a CTP scan
+        that shows saveable brain tissue, is not treated with thrombolysis due to other
+        contraindications.
     thrombectomy : bool or None
         Whether the patient receives thrombectomy.
     admission_avoidance : bool or None
@@ -188,9 +192,11 @@ class Patient:
         self.non_admission = np.NaN
 
         self.advanced_ct_pathway = None
+        self.thrombolysis_enabled_by_ctp = None
         self.sdec_pathway = None
 
         self.thrombolysis = None
+        self.thrombolysis_contraindicated = None
         self.thrombectomy = None
 
         self.admission_avoidance = None

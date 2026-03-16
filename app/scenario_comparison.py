@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 from stroke_ward_model.metrics import Metrics
 from app_utils import iconMetricContainer
-
+import numpy as np
 
 SCENARIO_PARAMS = {
     "sim_duration_days": ("Simulation Duration (days)", "days"),
@@ -18,6 +18,32 @@ SCENARIO_PARAMS = {
     "max_patients_per_run": ("Max Patients per Run", "patients"),
     "average_patients_per_year": ("Average Patients per Year", "patients"),
     "average_patients_per_day": ("Average Patients per Day", "patients"),
+    "therapy_sdec": ("Therapy available in SDEC?", "True/False"),
+    "thrombolysis_los_save": (
+        "LoS proportion for thrombolysed patient versus unthrombolysed",
+        "proportion",
+    ),
+    "sdec_dr_cost_min": ("SDEC staffing cost per minute", "£"),
+    "sdec_bed_day_saving": (
+        "Bed days assumed saved per admission avoidance through SDEC",
+        "days",
+    ),
+    "inpatient_bed_cost": (
+        "Cost per saved bed day (admission avoidance via SDEC)",
+        "£",
+    ),
+    "short_term_thrombolysis_savings": (
+        "Short-term (LoS-based) thrombolysis savings calculated?",
+        "True/False",
+    ),
+    "inpatient_bed_cost_thrombolysis": (
+        "Cost per saved bed day (thrombolysis LoS savings) - only used if looking at short-term thrombolysis savings",
+        "£",
+    ),
+    "fixed_thrombolysis_saving_amount_long_term": (
+        "Fixed saving from thrombolysis - only used if looking at long-term thrombolysis savings",
+        "£",
+    ),
 }
 
 # attr: (label, unit, is_key, icon, delta_color)
@@ -26,20 +52,34 @@ OUTCOME_PARAMS = {
         "Thrombolysis Yearly Saving",
         "£",
         True,
-        "f8d7",
+        "e133",
         "normal",
     ),
-    "sdec_yearly_save": ("SDEC Yearly Saving", "£", True, "f8d7", "normal"),
-    "overall_yearly_save": ("Overall Yearly Saving", "£", True, "e227", "normal"),
+    "sdec_yearly_save": ("SDEC Yearly Saving", "£", True, "e4d0", "normal"),
+    "overall_yearly_save": ("Overall Yearly Saving", "£", True, "f04b", "normal"),
     "extra_throm": ("Additional Thrombolysis", "patients", False, None, "normal"),
     "extra_throm_yearly": (
         "Additional Thrombolysis per Year",
         "patients",
         True,
-        "e557",
+        "e138",
         "normal",
     ),
-    "avoid_yearly": ("Admissions Avoided per Year", "patients", True, "e8f9", "normal"),
+    "thrombolysis_rate": (
+        "Overall Thrombolysis Rate",
+        "patients",
+        True,
+        "e133",
+        "normal",
+    ),
+    "thrombolysis_rate_without_ctp": (
+        "Thrombolysis Rate (excluding patients enabled by CTP scanning)",
+        "patients",
+        False,
+        "e133",
+        "normal",
+    ),
+    "avoid_yearly": ("Admissions Avoided per Year", "patients", True, "e0b6", "normal"),
     "avoid_yearly_min": (
         "Admissions Avoided per Year (Min)",
         "patients",
@@ -58,7 +98,7 @@ OUTCOME_PARAMS = {
         "Admission Delays per Year",
         "patients",
         True,
-        "e923",
+        "f38c",
         "inverse",
     ),
     "admit_delay_yearly_min": (
@@ -75,44 +115,44 @@ OUTCOME_PARAMS = {
         None,
         "inverse",
     ),
-    "mean_ward_occ": ("Mean Ward Occupancy", "beds", False, "e9f0", "inverse"),
-    "mean_ward_occ_perc": ("Mean Ward Occupancy (%)", "%", True, "e9f0", "inverse"),
+    "mean_ward_occ": ("Mean Ward Occupancy", "beds", False, "e13c", "inverse"),
+    "mean_ward_occ_perc": ("Mean Ward Occupancy (%)", "%", True, "e13c", "inverse"),
     "patients_inside_sdec_operating_hours": (
         "Patients Inside SDEC Hours",
         "patients",
         False,
-        None,
+        "e14b",
         "normal",
     ),
     "patients_inside_sdec_operating_hours_per_year": (
         "Patients Inside SDEC Hours per Year",
         "patients",
-        True,
-        "e8cc",
+        False,
+        "e14b",
         "normal",
     ),
     "patients_outside_sdec_operating_hours_per_year": (
         "Patients Outside SDEC Hours per Year",
         "patients",
-        False,
-        None,
+        True,
+        "e14b",
         "inverse",
     ),
-    "sdec_full": ("SDEC Full", "patients", False, None, "inverse"),
-    "sdec_full_per_year": ("SDEC Full per Year", "patients", True, "e6e1", "inverse"),
-    "sdec_full_min": ("SDEC Full (Min)", "patients", False, None, "inverse"),
+    "sdec_full": ("SDEC Full", "patients", False, "e7ef", "inverse"),
+    "sdec_full_per_year": ("SDEC Full per Year", "patients", True, "e7ef", "inverse"),
+    "sdec_full_min": ("SDEC Full (Min)", "patients", False, "e7ef", "inverse"),
     "sdec_full_per_year_min": (
         "SDEC Full per Year (Min)",
         "patients",
         False,
-        None,
+        "e7ef",
         "inverse",
     ),
     "sdec_full_per_year_max": (
         "SDEC Full per Year (Max)",
         "patients",
         False,
-        None,
+        "e7ef",
         "inverse",
     ),
 }
@@ -264,6 +304,34 @@ def render_key_metric_cards(run, baseline):
                 )
 
 
+def render_full_comparison_table():
+    runs = st.session_state.metrics_runs
+    if not runs:
+        st.info("No runs saved yet.")
+        return
+
+    rows = []
+
+    for attr, (label, unit, *_) in {**SCENARIO_PARAMS, **OUTCOME_PARAMS}.items():
+        row = {"Metric": label, "Unit": unit}
+        for run in runs:
+            metrics = run["metrics"]
+            val = (
+                getattr(metrics, attr, None)
+                if isinstance(metrics, Metrics)
+                else metrics.values.get(attr)
+            )
+            row[run["label"]] = (
+                round(float(val), 1)
+                if val is not None and not (isinstance(val, float) and np.isnan(val))
+                else None
+            )
+        rows.append(row)
+
+    df = pd.DataFrame(rows).set_index(["Metric", "Unit"])
+    st.dataframe(df, use_container_width=True)
+
+
 @st.fragment
 def render_scenario_manager():
     runs = st.session_state.metrics_runs
@@ -279,6 +347,9 @@ def render_scenario_manager():
         return
 
     labels = [r["label"] for r in runs]
+
+    with st.expander("Click to view a full summary table of all runs"):
+        render_full_comparison_table()
 
     st.session_state.baseline_index = st.radio(
         "Baseline run",
@@ -298,12 +369,12 @@ def render_scenario_manager():
 
         render_key_metric_cards(run, baseline)
 
-        st.divider()
-
         with st.expander("Scenario Parameters", expanded=False):
             param_df = build_comparison_df(run, baseline, SCENARIO_PARAMS)
             st.dataframe(style_difference_column(param_df), width="stretch")
 
-        with st.expander("Outcomes", expanded=True):
+        with st.expander("Outcomes", expanded=False):
             outcome_df = build_comparison_df(run, baseline, OUTCOME_PARAMS)
             st.dataframe(style_difference_column(outcome_df), width="stretch")
+
+        st.divider()

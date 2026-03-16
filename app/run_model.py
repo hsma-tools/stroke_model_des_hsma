@@ -28,13 +28,14 @@ from scenario_comparison import (
     render_run_manager,
 )
 
-from convert_event_log import convert_event_log, create_vidigi_animation
+from animation import display_animation
 
 from plots import (
     plot_dfg_per_feature,
     generate_occupancy_plots,
     plot_histogram,
     plot_time_heatmap,
+    plot_arrivals_per_day_histogram,
 )
 
 
@@ -53,6 +54,7 @@ if "baseline_index" not in st.session_state:
 
 g.gen_graph = True
 
+st.title("Stroke Ward Model")
 
 #########################
 # MARK: Inputs          #
@@ -223,7 +225,7 @@ in-hours?
         """,
         min_value=1.0,
         max_value=5000.0,
-        value=200.0,
+        value=167.5,
     )
 
     out_of_hours_demand_start = st.time_input(
@@ -239,7 +241,7 @@ out-of-hours?
         """,
         min_value=1.0,
         max_value=5000.0,
-        value=666.67,
+        value=358.00,
     )
 
     # Calculate shift durations (handling midnight wrap-around)
@@ -279,6 +281,84 @@ out-of-hours?
         f"**Estimated Annual Volume:** {int(total_annual):,} arrivals per year"
         f" ({int(annual_in):,} In-Hours, {int(annual_out):,} Out-of-Hours)"
     )
+
+    st.divider()
+
+    ###############################
+    # MARK: Treatment params      #
+    ###############################
+
+    st.subheader("Treatment parameters")
+
+    probability_not_thrombolysed = st.number_input(
+        "What is the probability that an ischaemic stroke patient will not be thrombolysed due to contraindications?",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.4,
+        help="""
+        This is the probability that a patient who has a known onset time, or for whom a CTP
+        scan shows salvageable tissue, will not be given thrombolysis due to contraindications
+        such as mild stroke symptoms and/or symptoms that are already improving, previous stroke
+        within a certain time period, severe uncontrolled hypertension, dementia, pregnancy,
+        recently taken certain oral anticoagulants, or previous use of thrombolysis for other
+        conditions within a given time period.
+
+        A probability of 0.4 means that 40% of patients (4 in 10) are assumed to have
+        contraindications.
+        """,
+    )
+
+    g.probability_of_thrombolysis_contraindication = probability_not_thrombolysed
+
+    st.divider()
+
+    ###############################
+    # MARK: Cost params           #
+    ###############################
+
+    st.subheader("Cost Parameters")
+
+    sdec_day_savings = st.number_input(
+        "How many days on a hyperacute stroke ward is an admission avoided through SDEC assumed to save?",
+        min_value=0.1,
+        max_value=10.0,
+        value=2.0,
+    )
+
+    g.sdec_bed_day_saving = sdec_day_savings
+
+    hyperacute_bed_day_cost = st.number_input(
+        "What is the cost per bed day for a hyperacute stroke stay? (£)",
+        value=819.0,
+        help="This will be used in calculations for the amount saved by using SDEC.",
+    )
+
+    g.inpatient_bed_cost = hyperacute_bed_day_cost
+
+    short_term_thrombolysis_savings = st.radio(
+        "Calculate short-term or long-term savings of thrombolysis?",
+        options=["Short-term", "Long-term"],
+        index=1,
+    )
+
+    if short_term_thrombolysis_savings == "Short-term":
+        g.short_term_thrombolysis_savings = True
+        acute_bed_day_cost = st.number_input(
+            "What is the cost per bed day for the lower-acuity phase of a stroke stay? (£)",
+            value=491.0,
+            help="This will be used in calculations for the amount saved by increased thrombolysis.",
+        )
+
+        g.inpatient_bed_cost_thrombolysis = acute_bed_day_cost
+    else:
+        g.short_term_thrombolysis_savings = False
+        fixed_thrombolysis_saving_amount_long_term = st.number_input(
+            "What is the amount assumed to be saved per additional thrombolysed patient? (£)",
+            value=5679.0,
+        )
+        g.fixed_thrombolysis_saving_amount_long_term = (
+            fixed_thrombolysis_saving_amount_long_term
+        )
 
     st.divider()
 
@@ -404,9 +484,9 @@ with new_run_tab:
             tab1, tab2, tab3, tab4, tab5 = st.tabs(
                 [
                     "Overview",
-                    "Output Graphs",
+                    "Occupancy Graphs",
                     "Process Maps",
-                    "Model Exploration",
+                    "Additional Graphs and Tables",
                     "Animation",
                 ]
             )
@@ -429,7 +509,9 @@ with new_run_tab:
                     ):
                         st.metric(
                             label="CTP scanners",
-                            value="Yes" if g.number_of_ctp > 0 else "No",
+                            value="Yes"
+                            if g.number_of_ctp > 0 or g.ctp_unav < 1440
+                            else "No",
                             border=True,
                         )
 
@@ -595,18 +677,39 @@ with new_run_tab:
                         type="symbols",
                     ):
                         st.metric(
-                            label="Average Thrombolysis Savings per Year",
+                            label="Average Thrombolysis Savings per Year"
+                            if g.short_term_thrombolysis_savings
+                            else "Average Thrombolysis Savings for Patients Treated per Year",
                             value=f"£{throm_yearly_save:,.0f}",
                             border=True,
                         )
 
-                        st.caption(f"""
-    The average total savings for the full model period
-    of {metrics.sim_duration_display} were
-    £{metrics.df_trial_results["Thrombolysis Savings (£)"].mean():,.0f}.
-    This looks only at savings from patients who were able to be offered thrombolysis
-    due to the enhanced capabilities of the CTP scanner.
-    """)
+                        if g.short_term_thrombolysis_savings:
+                            additional_text_thrombolysis_caption = f"""
+Thrombolysis savings look at the cost per lower-acuity bed day (£{g.inpatient_bed_cost_thrombolysis:.2f})
+multiplied by the number of bed days estimated to be saved per patient. Thrombolysis is estimated
+to reduce the length of stay to {g.thrombolysis_los_save:.1%} of what it would otherwise be.
+"""
+                        else:
+                            additional_text_thrombolysis_caption = f"""
+Thrombolysis savings use a fixed longer-term saving of £{g.fixed_thrombolysis_saving_amount_long_term:,.2f} per patient.
+    """
+
+                        st.caption(
+                            f"""
+The average total savings for the full model period
+of {metrics.sim_duration_display} were
+£{metrics.df_trial_results["Thrombolysis Savings (£)"].mean():,.0f}.
+
+This looks only at savings from patients who were able to be offered thrombolysis
+due to the enhanced capabilities of the CTP scanner. These are patients arriving
+outside of the traditional thrombolysable window or without a known onset time, but who are
+found to still have salvageable brain tissue via CTP scanning that warrants thrombolytic treatment.
+The cost of thrombolysis drugs are not taken into account due to reimbursement policies meaning
+individual hospitals will not incur increased costs from appropriate use of thrombolytic drugs.
+    """
+                            + additional_text_thrombolysis_caption
+                        )
 
                 with col2a:
                     with iconMetricContainer(
@@ -626,9 +729,10 @@ with new_run_tab:
     The average total savings for the full model period
     of {metrics.sim_duration_display} were
     £{metrics.df_trial_results["SDEC Savings (£)"].mean():,.0f}. This is
-    calculated as the total savings from running the SDEC, subtracting the
-    medical cost of running the SDEC. SDEC running costs are set to
+    calculated as the total savings from running the SDEC (average £{metrics.df_trial_results["Financial Savings of Admissions Avoidance (£)"].mean():,.0f}), subtracting the
+    medical cost of running the SDEC (£{metrics.df_trial_results["SDEC Medical Staff Cost (£)"].mean():,.0f}). SDEC running costs are set to
     £{(g.sdec_dr_cost_min * 60):.2f} per hour.
+    The total number of bed days saved from SDEC use is estimated to be {(g.sdec_bed_day_saving * metrics.avoid_yearly):.1f} per year (an average of {g.sdec_bed_day_saving:.2f} days per avoided admission).
                         """)
 
                 with col3a:
@@ -696,8 +800,7 @@ with new_run_tab:
                             f"""
     Avoided admissions are those patients who were able to leave after being seen
     in SDEC, and would have had a full admission if the SDEC was not available.
-    Range = {metrics.avoid_yearly_min} to {metrics.avoid_yearly_max} per year across runs.
-
+    Range = {metrics.avoid_yearly_min:.0f} to {metrics.avoid_yearly_max:.0f} per year across runs.
     The average total number of admissions avoided for the full model period
     of {metrics.sim_duration_display} were
     {metrics.df_trial_results["Number of Admissions Avoided In Run"].mean():,.0f}.
@@ -723,7 +826,9 @@ with new_run_tab:
 
                         st.caption(
                             f"""
-    This is an average occupancy of {(metrics.mean_ward_occ / g.number_of_ward_beds):.1%}
+    This is an average occupancy of {(metrics.mean_ward_occ / g.number_of_ward_beds):.1%}.
+    Studies suggest occupancy rates may need to be below 75% for a bed to be available 90-95%
+    of the time ([Source](https://arc-swp.nihr.ac.uk/wp/wp-content/uploads/2021/01/ESOC-2016-Poster-3-Stroke-Beds.pdf))
                             """
                         )
 
@@ -746,6 +851,8 @@ with new_run_tab:
 
                         st.caption(
                             f"""
+    Delayed admissions are those where a patient is deemed to need admission but a ward bed is not
+    immediately available.
     Range = {metrics.admit_delay_yearly_min} to {metrics.admit_delay_yearly_max} per year across runs.
     The average number of admissions that were delayed for the full model period
     of {metrics.sim_duration_display} were
@@ -788,7 +895,7 @@ with new_run_tab:
                         )
 
                     st.caption("""
-    This looks at the maximum delay seen across all model runs
+    This looks at the maximum delay seen across all model runs.
                     """)
 
                 col1d, col2d = st.columns(2)
@@ -809,6 +916,10 @@ with new_run_tab:
                             """,
                             border=True,
                         )
+                    st.caption("""
+    Long delays at this point could potentially contribute to moving patients outside of the window in which
+    therapies like thrombolysis will be effective.
+                    """)
 
                 # Add container with maximum duration of nurse triage delay
                 with col2d:
@@ -844,9 +955,7 @@ with new_run_tab:
                         type="symbols",
                     ):
                         st.metric(
-                            label="""
-    Average Patients Outside of SDEC Operating Hours
-                            """,
+                            label="Average Patients Outside of SDEC Operating Hours",
                             # value=f"{patients_outside_sdec_operating_hours_per_year:.0f} of {average_patients_per_year:.0f} ({(patients_outside_sdec_operating_hours_per_year / average_patients_per_year):.1%})",
                             value=f"""
     {metrics.patients_outside_sdec_operating_hours_per_year:.0f} of
@@ -885,9 +994,65 @@ with new_run_tab:
     being full. Range across runs = {metrics.sdec_full_per_year_min:.0f} to {metrics.sdec_full_per_year_max:.0f} patients per year.
                         """)
 
+                col1f, col1g = st.columns(2)
+
+                with col1f:
+                    with iconMetricContainer(
+                        key="thrombolysis_rate",
+                        icon_unicode="e133",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Thrombolysis Rate",
+                            value=f"""
+    {metrics.thrombolysis_rate:.1%}
+    ({metrics.thrombolysed:.0f} of {metrics.eligible_for_thrombolysis_per_year:.0f} strokes)
+    """,
+                            border=True,
+                        )
+
+                        st.caption(f"""
+    On average per year, {metrics.thrombolysed_per_year:.0f} patients were thrombolysed of
+    {metrics.eligible_for_thrombolysis_per_year:.0f} 'eligible' patients, of whom
+    {metrics.extra_throm_yearly:.0f} were able to be thrombolysed due to the use of CTP scanning.
+    Note that SSNAP takes both ischaemic strokes and intracranial haemhorrhage strokes (ICH) as
+    part of the denominator, despite ICH patients being ineligible for thrombolysis treatment
+    in practice.
+    """)
+
+                with col1g:
+                    with iconMetricContainer(
+                        key="thrombolysis_rate_without_ctp",
+                        icon_unicode="e133",
+                        family="outline",
+                        icon_color="black",
+                        type="symbols",
+                    ):
+                        st.metric(
+                            label="Thrombolysis Rate without CTP Scanning",
+                            value=f"""
+    {metrics.thrombolysis_rate_without_ctp:.1%} ({(metrics.thrombolysed - metrics.extra_throm_yearly):.0f} of {metrics.eligible_for_thrombolysis_per_year:.0f} strokes)
+    """,
+                            border=True,
+                        )
+
+                        st.caption(f"""
+    Without the additional patients able to be thrombolysed due to the use of the CTP scanner,
+    this would be the thrombolysis rate of the ward in the simulation.
+                        """)
+
                 st.subheader("Full Per-Run Results for Trial")
 
-                st.dataframe(my_trial.df_trial_results.T)
+                st.caption("Each column represents one run of the model.")
+
+                df_trial_results_transposed = my_trial.df_trial_results.T
+                df_trial_results_transposed.columns = (
+                    df_trial_results_transposed.columns + 1
+                )
+
+                st.dataframe(df_trial_results_transposed)
 
             with tab2:
                 generate_occupancy_plots(
@@ -920,6 +1085,11 @@ with new_run_tab:
                 ####################################
                 plot_time_heatmap(patient_df=metrics.patient_df, time_vars=time_vars)
 
+                ###################################
+                # MARK: Arrivals Histogram        #
+                ###################################
+                plot_arrivals_per_day_histogram(trial_object=my_trial)
+
             #########################
             # MARK: Animation       #
             #########################
@@ -928,12 +1098,11 @@ with new_run_tab:
                 # generated before the warm-up period elapsed
                 # st.write("Event Log")
                 # st.write(event_log)
-                # st.plotly_chart(
-                #     create_vidigi_animation_advanced(event_log, scenario=g())
-                # )
-
-                # st.write(create_vidigi_animation(event_log, scenario=g()))
-                st.write("Coming Soon!")
+                display_animation(
+                    patient_df=metrics.patient_df_including_warmup,
+                    scenario_class_instance=g(),
+                    limit_duration=60 * 24 * 28 * 1,
+                )
 
             refresh_runs_display()
 

@@ -101,6 +101,9 @@ class g:
         Percentage chance that a stroke mimic requires admission.
     sdec_dr_cost_min : float
         Cost per minute for SDEC doctor time.
+    sdec_bed_day_saving: float
+        The number of bed days an SDEC admission is assumed to save. This is used in calculating
+        the potential savings from SDEC usage.
     inpatient_bed_cost : float
         Cost of a standard inpatient bed stay, per day.
     inpatient_bed_cost_thrombolysis : float
@@ -144,15 +147,11 @@ class g:
     # 525600 (Year of Minutes)
     sim_duration = 525600
     number_of_runs = 10
+    # TODO - consider setting the default as a fixed number of minutes
     warm_up_period = sim_duration / 5
 
-    # TODO: SR query: confirm with John in case this was done in this way for
-    # a particular reason, but I've swapped it to a more intuitive use and
-    # something that will allow for setting via the app interface too
-    # patient_inter_day = 5
-    # patient_inter_night = 5
-    patient_inter_day = 200.0
-    patient_inter_night = 666.666666666667
+    patient_inter_day = 167.5  # 189.0
+    patient_inter_night = 358.00  # 247.00
 
     number_of_nurses = 2
     number_of_ctp = 1
@@ -164,9 +163,6 @@ class g:
     mean_n_sdec_time = 240
 
     # Different variables for ward stay based on diagnosis, thrombolysis and MRS
-    # TODO: SR - how are these determined? Assume historical data?
-    # TODO: SR - what is suspected reason for MRS of 1 having lower LOS than MRS of 0 whether ICH or I?
-
     mean_n_i_ward_time_mrs_0 = 1440 * 2.88
     mean_n_i_ward_time_mrs_1 = 1440 * 4.54
     mean_n_i_ward_time_mrs_2 = 1440 * 7.4
@@ -185,14 +181,60 @@ class g:
     mean_n_non_stroke_ward_time = 1440 * 3  # 4320
     mean_n_tia_ward_time = 1440 * 1
 
+    # For each patient who is considered for thrombolysis (because onset window known, or because
+    # onset window unknown but CTP scan is available and shows saveable brain), what is the chance
+    # that they will not be treated with thrombolysis due to absolute or relative
+    # contraindications (e.g. mild stroke symptoms and/or symptoms that are already improving,
+    # previous stroke within a certain  time period, severe uncontrolled hypertension, dementia,
+    # pregnancy, recently taken certain oral anticoagulants,
+    # previous use of thrombolysis for other conditions within a given time period,
+    # arriving later in thrombolysable window)
+    # See https://pmc.ncbi.nlm.nih.gov/articles/PMC9323435/ which found that 47% of patients
+    # who had a known onset <4.5 hours ago were not treated with thrombolysis, with 26% having
+    # absolute contraindication and 74% having relative contraindication
+    # and https://pmc.ncbi.nlm.nih.gov/articles/PMC9890612/
+    # and https://www.ncbi.nlm.nih.gov/books/NBK557411/
+    # This estimate may be updated if exact data is available, but is currently felt to be
+    # a reasonable estimate for a high-thrombolysing hospital (who may be more likely to thrombolyse
+    # in face of relative contraindications or may have patient mix with fewer absolute contraindications)
+    probability_of_thrombolysis_contraindication = 0.4
+
+    short_term_thrombolysis_savings = False
+
+    # If short_term_savings == True, will calculate thrombolysis savings by using an estimate of the cost
+    # of a stroke bed (making the assumption that the time saved comes from the time in the lower-cost SU,
+    # not HASU/ASU)
     thrombolysis_los_save = 0.75
 
+    # Alternatively, if short_term_savings == False, instead uses a provided value for expected savings.
+    # These could be to the NHS alone, or to society more widely. For example,
+    # https://www.strokeaudit.org/SupportFiles/Documents/Health-Economics/Health-economic-report-2016.aspx
+    # (2016) suggested that 5 year savings to the NHS could be in the region of £4100 per additional
+    # thrombolysed patient, and £6900 to social care (as well as 0.26 QALYs).
+    # The default for the long term savings figure is the £4100 multiplied by the
+    fixed_thrombolysis_saving_amount_long_term = 5679
+
+    # If fixed thrombolysis savings == True, will calculate thrombolysis savings by
+    # multiplying the number of additional patients thrombolysed through provision of the
+    # CTP scanner by the estimated savings per patient through administering thrombolysis
+
     sdec_dr_cost_min = 0.50
-    # TODO: SR: John, I assume these are costs per day?
-    # Can we explain where these values are taken from? Is it specific to a
-    # given trust? What year are these values calculated for?
-    inpatient_bed_cost = 876
-    inpatient_bed_cost_thrombolysis = 528.17
+    # how many inpatient days an SDEC admission is assumed to save.
+    sdec_bed_day_saving = 2.0
+
+    # daily cost for bed days
+    # taken from https://www.england.nhs.uk/london/wp-content/uploads/sites/8/2019/09/acute-commissioning-and-tariff-guidance.pdf
+    # adjusted for inflation using bank of england calculator
+    # This value will be used for SDEC savings
+    inpatient_bed_cost = (
+        819.53  # £633 HASU component in 2019 --> £818.53 in January 2026
+    )
+    # This value will be used for thrombolysis savings
+    inpatient_bed_cost_thrombolysis = (
+        491.38  # £380 less-acute bed day rate for 2019 --> £491.38 in January 2026
+    )
+
+    # Average modified rankin scale score for patients arriving
     mean_mrs = 2
 
     # Diagnosis % range
@@ -227,11 +269,12 @@ class g:
     ooh_start = 0
 
     # Setting of relative frequencies of onsets
-
+    # Approximation based on https://strokeaudit.org/SupportFiles/Documents/Posters-and-oral-presentations/2020/ESOC-2020-Onset-to-arrival-times_Poster.aspx#:~:text=Of%20433%2C209%20patients%20admitted%20to,75%5D%20(figure%202).
     in_hours_known_onset = 0.7
     in_hours_unknown_onset_inside_ctp = 0.15
     in_hours_unknown_onset_outside_ctp = 0.15
-
+    # This is presumed to be lower due to wake-up strokes being the primary strokes occurring overnight
+    # Awaiting better data at which point this should be reparameterised.
     out_of_hours_known_onset = 0.2
     out_of_hours_unknown_onset_inside_ctp = 0.4
     out_of_hours_unknown_onset_outside_ctp = 0.4

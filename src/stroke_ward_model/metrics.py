@@ -117,7 +117,43 @@ year{"" if self.sim_duration_days // 365 == 1 else "s"} and
         self.extra_throm = g.trial_additional_thrombolysis_from_ctp[
             g.trials_run_counter
         ]
-        self.extra_throm_yearly = (self.extra_throm / (g.sim_duration / 60 / 24)) * 365
+        self.extra_throm_yearly = self.scale_to_year(self.extra_throm)
+
+        # Total number of patients thrombolysed
+        self.thrombolysed = (
+            self.patient_df[self.patient_df["thrombolysis"] == True]
+            .groupby("run")
+            .size()
+            .mean()
+        )
+
+        self.thrombolysed_per_year = self.scale_to_year(self.thrombolysed)
+        # SSNAP uses all strokes as denominator (even though patients with ICH should never
+        # be thrombolysed in practice)
+        # https://ssnap.zendesk.com/hc/en-us/articles/23535233448093-3-1-Percentage-of-all-stroke-patients-given-thrombolysis-Reperfusion-domain
+        # (plus discussions with JW to confirm what 'all patients in the cohort' includes)
+        self.eligible_for_thrombolysis = (
+            self.patient_df[
+                self.patient_df["patient_diagnosis_type"].isin(["I", "ICH"])
+            ]
+            .groupby("run")
+            .size()
+            .mean()
+        )
+
+        self.eligible_for_thrombolysis_per_year = self.scale_to_year(
+            self.eligible_for_thrombolysis
+        )
+
+        self.thrombolysis_rate = (
+            self.thrombolysed / self.eligible_for_thrombolysis_per_year
+        )
+
+        self.count_thrombolysis_without_ctp = self.thrombolysed - self.extra_throm
+        self.thrombolysis_rate_without_ctp = (
+            self.count_thrombolysis_without_ctp
+            / self.eligible_for_thrombolysis_per_year
+        )
 
         # Number of patients who can avoid a full admission due to SDEC operating
         self.avoid_yearly = (

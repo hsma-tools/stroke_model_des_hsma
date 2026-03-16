@@ -472,6 +472,7 @@ class Model:
             if self.env.now > g.warm_up_period:
                 self.sdec_freeze_counter += 1
 
+    # MARK: M: Set patient attributes #
     def set_patient_attributes(self, patient):
         """
         Sets a series of randomised per-patient attributes
@@ -775,21 +776,41 @@ class Model:
         # the patient diagnosis, onset type and mrs type. There are different
         # conditions depending on if CTP is available or not.
 
+        # If CTP scanner is not available, only patients who have a known stroke onset time
+        # are eligible for thrombolysis. MRS must also be 1 or above (i.e. simplistically,
+        # some disability must be present for risk/benefit of thrombolysis to be worthwhile.)
         if (
             patient.patient_diagnosis == 1
             and patient.onset_type == 0
             and patient.mrs_type > 0
         ):
-            patient.thrombolysis = True
+            if (
+                self.thrombolysis_contraindication_chance.sample()
+                > g.probability_of_thrombolysis_contraindication
+            ):
+                patient.thrombolysis = True
+            else:
+                patient.thrombolysis = False
+                patient.thrombolysis_contraindicated = True
 
+        # If the CTP scanner is available, then patients with an unknown onset but within the thrombolysable
+        # window are considered eligible for thrombolysis. The same rules apply to the disability.
         elif (
             patient.patient_diagnosis == 1
             and patient.onset_type == 1
             and patient.advanced_ct_pathway == True
             and patient.mrs_type > 0
         ):
-            patient.thrombolysis = True
-            self.additional_thrombolysis_from_ctp += 1
+            if (
+                self.thrombolysis_contraindication_chance.sample()
+                > g.probability_of_thrombolysis_contraindication
+            ):
+                patient.thrombolysis = True
+                self.additional_thrombolysis_from_ctp += 1
+                patient.thrombolysis_enabled_by_ctp = True
+            else:
+                patient.thrombolysis = False
+                patient.thrombolysis_contraindicated = True
 
         else:
             patient.thrombolysis = False
@@ -997,46 +1018,33 @@ class Model:
             # This code add information regarding the patients admission avoidance.
 
             if patient.admission_avoidance == True and patient.patient_diagnosis < 2:
-                # Update savings value in model results
-                if self.env.now > g.warm_up_period:
-                    self.results_df.at[patient.id, "Admission Avoidance"] = (
-                        patient.sdec_pathway
-                    )
-
-                    last_index = self.results_df["SDEC Savings"].last_valid_index()
-                    last_value = self.results_df.loc[last_index, "SDEC Savings"]
-                    if last_index > 0 and pd.notnull:
-                        self.results_df.at[patient.id, "SDEC Savings"] = (
-                            last_value + g.inpatient_bed_cost
-                        )
-
-                    else:
-                        self.results_df.at[patient.id, "SDEC Savings"] = (
-                            g.inpatient_bed_cost
-                        )
-
                 # Regardless of whether the warm-up has passed, recording in
                 # patient object that this patient's journey was completed
                 patient.exit_time = self.env.now
                 patient.journey_completed = True
 
                 # Patients with a True admission avoidance are added to a list
-                # that is used to calculate the savings from the avoided admissions.
+                # that is used to calculate the savings from the avoided admissions
+                # (only if outside of the warm-up period)
                 if (
                     patient.admission_avoidance == True
-                    and patient.patient_diagnosis < 2
                     and self.env.now > g.warm_up_period
                 ):
                     self.admission_avoidance.append(patient)
 
-                # This code exists after the admission avoidance code so they
-                # are not added to the admission avoidance list, as that should
-                # only be for SDEC patients who avoid admission.
-                # This code ensures that these patients get an exit time
+                    # We also add their savings to the dataframe
+                    self.results_df.at[patient.id, "SDEC Savings"] = (
+                        g.inpatient_bed_cost * g.sdec_bed_day_saving
+                    )
 
-                if patient.non_admitted_tia_ns_sm == True:
-                    patient.exit_time = self.env.now
-                    patient.journey_completed = True
+            # This code exists after the admission avoidance code so they
+            # are not added to the admission avoidance list, as that should
+            # only be for SDEC patients who avoid admission.
+            # This code ensures that these patients get an exit time
+
+            if patient.non_admitted_tia_ns_sm == True:
+                patient.exit_time = self.env.now
+                patient.journey_completed = True
 
         ###############################################
         # MARK: SDEC Full or closed
@@ -1167,10 +1175,9 @@ class Model:
                 ###############################
 
                 if patient.patient_diagnosis == 0 and patient.mrs_type == 0:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_0
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_0_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_0_dist.sample_within_bounds(minimum=1)
+                    )
                     patient.mrs_discharge = patient.mrs_type
                     trace(
                         time=self.env.now,
@@ -1185,10 +1192,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 0 and patient.mrs_type == 1:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_1
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_1_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_1_dist.sample_within_bounds(minimum=1)
+                    )
                     # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                     patient.mrs_discharge = (
                         patient.mrs_type - self.mrs_reduction_during_stay.sample()
@@ -1206,10 +1212,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 0 and patient.mrs_type == 2:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_2
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_2_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_2_dist.sample_within_bounds(minimum=1)
+                    )
                     # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                     patient.mrs_discharge = (
                         patient.mrs_type - self.mrs_reduction_during_stay.sample()
@@ -1227,10 +1232,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 0 and patient.mrs_type == 3:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_3
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_3_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_3_dist.sample_within_bounds(minimum=1)
+                    )
                     # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                     patient.mrs_discharge = (
                         patient.mrs_type - self.mrs_reduction_during_stay.sample()
@@ -1248,10 +1252,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 0 and patient.mrs_type == 4:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_4
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_4_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_4_dist.sample_within_bounds(minimum=1)
+                    )
                     # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                     patient.mrs_discharge = (
                         patient.mrs_type - self.mrs_reduction_during_stay.sample()
@@ -1269,10 +1272,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 0 and patient.mrs_type == 5:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_ich_ward_time_mrs_5
-                    # )
-                    sampled_ward_act_time = self.ich_ward_time_mrs_5_dist.sample()
+                    sampled_ward_act_time = (
+                        self.ich_ward_time_mrs_5_dist.sample_within_bounds(minimum=1)
+                    )
                     # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                     patient.mrs_discharge = (
                         patient.mrs_type - self.mrs_reduction_during_stay.sample()
@@ -1302,10 +1304,9 @@ class Model:
                 # LOS and associated savings accordingly.
 
                 if patient.patient_diagnosis == 1 and patient.mrs_type == 0:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_0
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_0_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_0_dist.sample_within_bounds(minimum=1)
+                    )
                     patient.mrs_discharge = patient.mrs_type
                     trace(
                         time=self.env.now,
@@ -1320,10 +1321,9 @@ class Model:
                     self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 1 and patient.mrs_type == 1:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_1
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_1_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_1_dist.sample_within_bounds(minimum=1)
+                    )
                     if patient.thrombolysis == True:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
@@ -1345,18 +1345,26 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.advanced_ct_pathway == True
+                            and patient.thrombolysis_enabled_by_ctp == True
                         ):
-                            self.results_df.at[patient.id, "Thrombolysis Savings"] = (
-                                (
+                            if g.short_term_thrombolysis_savings:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = (
                                     (
-                                        sampled_ward_act_time
-                                        - sampled_ward_act_time_thrombolysis
+                                        (
+                                            sampled_ward_act_time
+                                            - sampled_ward_act_time_thrombolysis
+                                        )
+                                        / 60
                                     )
-                                    / 60
-                                )
-                                / 24
-                            ) * g.inpatient_bed_cost_thrombolysis
+                                    / 24
+                                ) * g.inpatient_bed_cost_thrombolysis
+                            else:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = g.fixed_thrombolysis_saving_amount_long_term
+
                         patient.ward_discharge_time = self.env.now
                         self.ward_occupancy.remove(patient)
                     else:
@@ -1377,10 +1385,9 @@ class Model:
                         self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 1 and patient.mrs_type == 2:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_2
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_2_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_2_dist.sample_within_bounds(minimum=1)
+                    )
                     if patient.thrombolysis == True:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
@@ -1403,18 +1410,25 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.advanced_ct_pathway == True
+                            and patient.thrombolysis_enabled_by_ctp == True
                         ):
-                            self.results_df.at[patient.id, "Thrombolysis Savings"] = (
-                                (
+                            if g.short_term_thrombolysis_savings:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = (
                                     (
-                                        sampled_ward_act_time
-                                        - sampled_ward_act_time_thrombolysis
+                                        (
+                                            sampled_ward_act_time
+                                            - sampled_ward_act_time_thrombolysis
+                                        )
+                                        / 60
                                     )
-                                    / 60
-                                )
-                                / 24
-                            ) * g.inpatient_bed_cost_thrombolysis
+                                    / 24
+                                ) * g.inpatient_bed_cost_thrombolysis
+                            else:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = g.fixed_thrombolysis_saving_amount_long_term
                         patient.ward_discharge_time = self.env.now
                         self.ward_occupancy.remove(patient)
                     else:
@@ -1435,10 +1449,9 @@ class Model:
                         self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 1 and patient.mrs_type == 3:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_3
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_3_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_3_dist.sample_within_bounds(minimum=1)
+                    )
                     if patient.thrombolysis == True:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
@@ -1461,18 +1474,25 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.advanced_ct_pathway == True
+                            and patient.thrombolysis_enabled_by_ctp == True
                         ):
-                            self.results_df.at[patient.id, "Thrombolysis Savings"] = (
-                                (
+                            if g.short_term_thrombolysis_savings:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = (
                                     (
-                                        sampled_ward_act_time
-                                        - sampled_ward_act_time_thrombolysis
+                                        (
+                                            sampled_ward_act_time
+                                            - sampled_ward_act_time_thrombolysis
+                                        )
+                                        / 60
                                     )
-                                    / 60
-                                )
-                                / 24
-                            ) * g.inpatient_bed_cost_thrombolysis
+                                    / 24
+                                ) * g.inpatient_bed_cost_thrombolysis
+                            else:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = g.fixed_thrombolysis_saving_amount_long_term
                         patient.ward_discharge_time = self.env.now
                         self.ward_occupancy.remove(patient)
                     else:
@@ -1493,10 +1513,9 @@ class Model:
                         self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 1 and patient.mrs_type == 4:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_4
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_4_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_4_dist.sample_within_bounds(minimum=1)
+                    )
                     if patient.thrombolysis == True:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
@@ -1519,18 +1538,25 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.advanced_ct_pathway == True
+                            and patient.thrombolysis_enabled_by_ctp == True
                         ):
-                            self.results_df.at[patient.id, "Thrombolysis Savings"] = (
-                                (
+                            if g.short_term_thrombolysis_savings:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = (
                                     (
-                                        sampled_ward_act_time
-                                        - sampled_ward_act_time_thrombolysis
+                                        (
+                                            sampled_ward_act_time
+                                            - sampled_ward_act_time_thrombolysis
+                                        )
+                                        / 60
                                     )
-                                    / 60
-                                )
-                                / 24
-                            ) * g.inpatient_bed_cost_thrombolysis
+                                    / 24
+                                ) * g.inpatient_bed_cost_thrombolysis
+                            else:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = g.fixed_thrombolysis_saving_amount_long_term
                         patient.ward_discharge_time = self.env.now
                         self.ward_occupancy.remove(patient)
                     else:
@@ -1551,10 +1577,9 @@ class Model:
                         self.ward_occupancy.remove(patient)
 
                 elif patient.patient_diagnosis == 1 and patient.mrs_type == 5:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_i_ward_time_mrs_5
-                    # )
-                    sampled_ward_act_time = self.i_ward_time_mrs_5_dist.sample()
+                    sampled_ward_act_time = (
+                        self.i_ward_time_mrs_5_dist.sample_within_bounds(minimum=1)
+                    )
                     if patient.thrombolysis == True:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
@@ -1578,18 +1603,25 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.advanced_ct_pathway == True
+                            and patient.thrombolysis_enabled_by_ctp == True
                         ):
-                            self.results_df.at[patient.id, "Thrombolysis Savings"] = (
-                                (
+                            if g.short_term_thrombolysis_savings:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = (
                                     (
-                                        sampled_ward_act_time
-                                        - sampled_ward_act_time_thrombolysis
+                                        (
+                                            sampled_ward_act_time
+                                            - sampled_ward_act_time_thrombolysis
+                                        )
+                                        / 60
                                     )
-                                    / 60
-                                )
-                                / 24
-                            ) * g.inpatient_bed_cost_thrombolysis
+                                    / 24
+                                ) * g.inpatient_bed_cost_thrombolysis
+                            else:
+                                self.results_df.at[
+                                    patient.id, "Thrombolysis Savings"
+                                ] = g.fixed_thrombolysis_saving_amount_long_term
                         patient.ward_discharge_time = self.env.now
                         self.ward_occupancy.remove(patient)
                     else:
@@ -1621,7 +1653,9 @@ class Model:
                     # sampled_ward_act_time = random.expovariate(
                     #     1.0 / g.mean_n_tia_ward_time
                     # )
-                    sampled_ward_act_time = self.tia_ward_time_dist.sample()
+                    sampled_ward_act_time = (
+                        self.tia_ward_time_dist.sample_within_bounds(minimum=1)
+                    )
                     trace(
                         time=self.env.now,
                         debug=g.show_trace,
@@ -1643,7 +1677,9 @@ class Model:
                     # sampled_ward_act_time = random.expovariate(
                     #     1.0 / g.mean_n_non_stroke_ward_time
                     # )
-                    sampled_ward_act_time = self.non_stroke_ward_time_dist.sample()
+                    sampled_ward_act_time = (
+                        self.non_stroke_ward_time_dist.sample_within_bounds(minimum=1)
+                    )
 
                     trace(
                         time=self.env.now,
@@ -1782,9 +1818,10 @@ class Model:
         # admission avoidance attributes and will ensure that only SDEC
         # patients who are explicitly benefitting from admission avoidance
         # via SDEC will be counted here
-        self.sdec_financial_savings = (
-            len(self.admission_avoidance) * g.inpatient_bed_cost
-        )
+        # self.sdec_financial_savings = (
+        #     len(self.admission_avoidance) * g.inpatient_bed_cost
+        # )
+        self.sdec_financial_savings = round(self.results_df["SDEC Savings"].sum(), 0)
 
         # The below code ensures that the SDEC incurs no cost if it is not
         # running at all in the model. This was introduced as a bug was causing

@@ -4,11 +4,48 @@ Initialises and manages random distributions used throughout the simulation.
 
 import numpy as np
 import pandas as pd
-from sim_tools.distributions import Exponential, Normal, DiscreteEmpirical
+from sim_tools.distributions import Exponential, Normal, DiscreteEmpirical, Uniform
 from typing import Optional
 from numpy.random import SeedSequence
 
 from stroke_ward_model.inputs import g
+
+
+def sample_within_bounds(
+    self,
+    minimum: Optional[float] = None,
+    maximum: Optional[float] = None,
+) -> float:
+    """
+    Sample from the exponential distribution until a value falls within bounds.
+
+    Parameters
+    ----------
+    minimum : Optional[float], default=None
+        The lower bound (inclusive). If None, no lower bound is applied.
+    maximum : Optional[float], default=None
+        The upper bound (inclusive). If None, no upper bound is applied.
+
+    Returns
+    -------
+    float
+        A single sample that falls within [minimum, maximum].
+    """
+    if minimum is not None and maximum is not None and minimum > maximum:
+        raise ValueError(
+            f"minimum ({minimum}) must be less than or equal to maximum ({maximum})"
+        )
+
+    while True:
+        value = self.sample()
+        below_max = maximum is None or value <= maximum
+        above_min = minimum is None or value >= minimum
+        if below_max and above_min:
+            return value
+
+
+# Bind the modified sampling class to the exponentia distribution
+Exponential.sample_within_bounds = sample_within_bounds
 
 
 class NSPPThinningModified:
@@ -310,4 +347,8 @@ def initialise_distributions(self):
         values=[0, 1, 2],
         freq=[1, 1, 1],
         random_seed=seeds[31],
+    )
+
+    self.thrombolysis_contraindication_chance = Uniform(
+        low=0, high=1, random_seed=seeds[32]
     )

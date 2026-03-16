@@ -7,11 +7,11 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from vidigi.process_mapping import (
-    add_sim_timestamp, discover_dfg, dfg_to_graphviz
-)
+from vidigi.process_mapping import add_sim_timestamp, discover_dfg, dfg_to_graphviz
 
-from convert_event_log import convert_event_log
+from animation import convert_event_log
+
+from stroke_ward_model.plots import TrialPlots
 
 
 def plot_occupancy(
@@ -181,9 +181,7 @@ def plot_occupancy(
         )
 
         # Create a line plot with one line per run
-        occupancy_fig = px.line(
-            occupancy_df, x="Days", y="Occupancy", color="run"
-        )
+        occupancy_fig = px.line(occupancy_df, x="Days", y="Occupancy", color="run")
         occupancy_fig.update_traces(opacity=0.3)
 
         # Add mean line across runs
@@ -218,8 +216,8 @@ def plot_occupancy(
 @st.fragment
 def plot_dfg_per_feature(split_vars, patient_df):
     """
-    Plot directly-follows graphs (DFGs) optionally faceted by a
-    patient-level variable.
+    Plot directly-follows graphs (DFGs) optionally faceted by up to two
+    patient-level variables.
 
     Parameters
     ----------
@@ -242,6 +240,16 @@ def plot_dfg_per_feature(split_vars, patient_df):
         key="selected_facet_var_dfg",
     )
 
+    # Choose an optional second faceting variable (rows)
+    second_facet_options = [None] + [
+        k for k in split_vars.keys() if k != selected_facet_var
+    ]
+    selected_facet_var_2 = st.selectbox(
+        "Select a second metric to facet by (rows)",
+        options=second_facet_options,
+        key="selected_facet_var_2_dfg",
+    )
+
     selected_run = st.selectbox(
         "Select a run", options=list(range(1, max(patient_df.run) + 1)), index=0
     )
@@ -249,8 +257,7 @@ def plot_dfg_per_feature(split_vars, patient_df):
     # Choose the time display label for the DFG
     time_format = st.radio(
         "Time Format",
-        ["Display in Minutes", "Display in Hours",
-            "Display in Days"],
+        ["Display in Minutes", "Display in Hours", "Display in Days"],
     )
 
     if time_format == "Display in Minutes":
@@ -260,21 +267,22 @@ def plot_dfg_per_feature(split_vars, patient_df):
     elif time_format == "Display in Days":
         unit = "days"
 
-    # Add human-readable timestamps for plotting or annotation
-
-    if selected_facet_var is None:
-        event_log = convert_event_log(patient_df, run=selected_run)
-
+    def _render_dfg(container, df, run, unit, title=None):
+        """Build and render a single DFG into `container`."""
+        event_log = convert_event_log(df, run=run)
         event_log["event"] = event_log["event"].apply(
             lambda x: x.replace("_time", "").replace("_", " ")
         )
-
         event_log = add_sim_timestamp(event_log, time_unit="minutes")
-
-        # Single DFG over all cases
         nodes, edges = discover_dfg(event_log, case_col="id", time_unit=unit)
 
-        st.image(
+        if len(edges) == 0:
+            container.write(
+                f"No process map could be generated: no directly-follows relationships in this subgroup ({title})."
+            )
+            return
+
+        container.image(
             dfg_to_graphviz(
                 nodes,
                 edges,
@@ -283,71 +291,59 @@ def plot_dfg_per_feature(split_vars, patient_df):
                 dpi=500,
                 direction="TD",
                 time_unit=unit,
-            ),
-            width="content",
+                title=title,
+            )
         )
-    else:
-        # Facet DFGs by the selected patient-level variable
-        selected_facet_value = split_vars[selected_facet_var]
 
-        # Many categories -> use tabs; few -> use columns
-        if patient_df[selected_facet_value].nunique(dropna=False) > 3:
-            dfg_tabs = st.tabs(
-                [str(x) for x in patient_df[selected_facet_value].unique()]
-            )
+    def _render_facet_row(df_row, run, unit, facet_col=None, facet_label_prefix=""):
+        if facet_col is None:
+            _render_dfg(st, df_row, run, unit)
         else:
-            dfg_tabs = st.columns(
-                patient_df[selected_facet_value].nunique(dropna=False)
+            facet_values = sorted(
+                df_row[facet_col].unique(), key=lambda x: (x is None, x)
+            )  # <-- sort here
+            if len(facet_values) > 3:
+                containers = st.tabs([str(v) for v in facet_values])
+            else:
+                containers = st.columns(len(facet_values))
+
+            for container, val in zip(containers, facet_values):
+                df_sub = df_row[df_row[facet_col] == val]
+                title = f"{facet_label_prefix}{facet_col}: {val}"
+                _render_dfg(container, df_sub, run, unit, title=title)
+
+    # --- Rendering ---
+    if selected_facet_var is None:
+        # No faceting at all — single DFG
+        _render_dfg(st, patient_df, selected_run, unit)
+
+    elif selected_facet_var_2 is None:
+        # Single facet level (original behaviour)
+        facet_col = split_vars[selected_facet_var]
+        _render_facet_row(patient_df, selected_run, unit, facet_col=facet_col)
+
+    else:
+        # Two facet levels: second variable → rows, first variable → tabs/columns
+        facet_col_1 = split_vars[selected_facet_var_2]  # rows
+        facet_col_2 = split_vars[selected_facet_var]  # columns
+
+        for row_val in sorted(
+            patient_df[facet_col_1].unique(), key=lambda x: (x is None, x)
+        ):
+            st.subheader(f"{selected_facet_var_2}: {row_val}")
+            df_row = patient_df[patient_df[facet_col_1] == row_val]
+            _render_facet_row(
+                df_row,
+                selected_run,
+                unit,
+                facet_col=facet_col_2,
+                facet_label_prefix=f"{selected_facet_var_2}: {row_val} | ",
             )
-
-        for idx, var in enumerate(patient_df[selected_facet_value].unique()):
-            # Rebuild the event log restricted to this subgroup
-            event_log_filtered = convert_event_log(
-                patient_df[patient_df[selected_facet_value] == var], run=selected_run
-            )
-
-            # Make event labels more readable for plotting
-            event_log_filtered["event"] = event_log_filtered["event"].apply(
-                lambda x: x.replace("_time", "").replace("_", " ")
-            )
-
-            # Add timestamps for the filtered event log
-            event_log_filtered = add_sim_timestamp(event_log_filtered)
-
-            # Build a DFG for this subgroup
-            nodes, edges = discover_dfg(
-                event_log_filtered,
-                case_col="id",
-                time_unit=unit,
-            )
-
-            # If there are no edges, skip plotting
-            if len(edges) == 0:
-                dfg_tabs[idx].write(f"""
-No process map could be generated for {selected_facet_var} = {var} because
-there are no directly-follows relationships in this subgroup."
-                """)
-                continue
-
-            # Otherwise, render plot
-            dfg_tabs[idx].image(
-                dfg_to_graphviz(
-                    nodes,
-                    edges,
-                    return_image=True,
-                    size=[8, 4],
-                    dpi=500,
-                    direction="TD",
-                    time_unit=unit,
-                    title=f"{selected_facet_value}: {var}",
-                )
-            )
+            st.divider()
 
 
 @st.fragment
-def generate_occupancy_plots(
-    my_trial, warm_up_duration_days, sim_duration_days
-):
+def generate_occupancy_plots(my_trial, warm_up_duration_days, sim_duration_days):
     """
     Display ward and SDEC occupancy plots and related result tables.
 
@@ -371,16 +367,12 @@ def generate_occupancy_plots(
         directly in the Streamlit app.
     """
     # Toggle whether to show quantile bands around occupancy
-    conf_intervals = st.toggle(
-        "Show Confidence Intervals", value=True
-    )
+    conf_intervals = st.toggle("Show Confidence Intervals", value=True)
 
     st.subheader("Ward Occupancy Over Time")
     ward_occupancy_fig = plot_occupancy(
         occupancy_df=my_trial.ward_occupancy_df,
-        total_sim_duration_days=(
-            warm_up_duration_days + sim_duration_days
-        ),
+        total_sim_duration_days=(warm_up_duration_days + sim_duration_days),
         warm_up_duration_days=warm_up_duration_days,
         plot_confidence_intervals=conf_intervals,
     )
@@ -389,9 +381,7 @@ def generate_occupancy_plots(
     st.subheader("SDEC Occupancy Over Time")
     sdec_occupancy_fig = plot_occupancy(
         occupancy_df=my_trial.sdec_occupancy_df,
-        total_sim_duration_days=(
-            warm_up_duration_days + sim_duration_days
-        ),
+        total_sim_duration_days=(warm_up_duration_days + sim_duration_days),
         warm_up_duration_days=warm_up_duration_days,
         plot_confidence_intervals=conf_intervals,
     )
@@ -402,8 +392,15 @@ def generate_occupancy_plots(
         st.subheader("Full Per-Run Results for Trial")
         st.dataframe(my_trial.df_trial_results.T)
 
-        st.subheader("ull Per-Patient Results for Trial (Including Warm-Up)")
+        st.subheader("Full Per-Patient Results for Trial (Including Warm-Up)")
+        st.caption("These values are drawn from patient objects")
         st.dataframe(my_trial.trial_patient_df)
+
+        st.subheader("Recorded Per-Patient Results for Trial (Excluding Warm-Up)")
+        st.caption(
+            "These values are recorded to the results dataframe tracking each patient"
+        )
+        st.dataframe(my_trial.trial_results_df)
 
         st.subheader("Ward Occupancy Audits")
         st.dataframe(my_trial.ward_occupancy_df)
@@ -518,3 +515,23 @@ def plot_histogram(
                 facet_col="variable",
             )
         )
+
+
+@st.fragment
+def plot_arrivals_per_day_histogram(trial_object):
+
+    st.subheader("Arrivals Per Day")
+
+    selected_run = st.selectbox(
+        "Select a run",
+        options=list(range(1, max(trial_object.trial_patient_df.run) + 1)),
+        index=0,
+        key="run_select_arrivals_per_day_histogram",
+    )
+
+    trial_plots = TrialPlots(trial_object=trial_object)
+    results = trial_plots.plot_arrivals_per_day(run=selected_run)
+
+    st.plotly_chart(results["histogram"])
+
+    st.plotly_chart(results["timeseries"])

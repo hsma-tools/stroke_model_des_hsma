@@ -88,6 +88,9 @@ class Trial:
         self.trial_patient_dataframes = []
         self.trial_patient_df = pd.DataFrame()
 
+        self.results_dataframes = []
+        self.trial_results_df = pd.DataFrame()
+
     # MARK: M: run_trial
     # Method to run a trial
 
@@ -165,6 +168,8 @@ class Trial:
             )
             patient_dataframe["run"] = run + 1
             self.trial_patient_dataframes.append(patient_dataframe)
+            my_model.results_df["run"] = run + 1
+            self.results_dataframes.append(my_model.results_df)
 
             my_model.ward_occupancy_graph_df["run"] = run + 1
             self.ward_occupancy_audits.append(my_model.ward_occupancy_graph_df)
@@ -175,6 +180,7 @@ class Trial:
         self.trial_patient_df = pd.concat(self.trial_patient_dataframes)
         self.ward_occupancy_df = pd.concat(self.ward_occupancy_audits)
         self.sdec_occupancy_df = pd.concat(self.sdec_occupancy_audits)
+        self.trial_results_df = pd.concat(self.results_dataframes)
 
         if g.write_to_csv == True:
             self.df_trial_results.to_csv(
