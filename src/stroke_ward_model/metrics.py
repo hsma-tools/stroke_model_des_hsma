@@ -72,6 +72,22 @@ year{"" if self.sim_duration_days // 365 == 1 else "s"} and
         self.duration_hours_sdec = ((24 * 60) - g.sdec_unav_time) / 60
         self.end_hour_sdec = (self.start_hour_sdec + self.duration_hours_sdec) % 24
 
+        # Additional attributes for reporting
+        self.number_of_ward_beds = g.number_of_ward_beds
+        self.sdec_beds = g.sdec_beds
+
+        self.therapy_sdec = int(g.therapy_sdec)
+        self.thrombolysis_los_save = g.thrombolysis_los_save
+
+        self.sdec_dr_cost_min = g.sdec_dr_cost_min
+        self.sdec_bed_day_saving = g.sdec_bed_day_saving
+        self.inpatient_bed_cost = g.inpatient_bed_cost
+        self.short_term_thrombolysis_savings = int(g.short_term_thrombolysis_savings)
+        self.inpatient_bed_cost_thrombolysis = g.inpatient_bed_cost_thrombolysis
+        self.fixed_thrombolysis_saving_amount_long_term = (
+            g.fixed_thrombolysis_saving_amount_long_term
+        )
+
         # Patients per run
         self.average_patients_per_run = self.patient_df.groupby("run").size().mean()
         self.min_patients_per_run = self.patient_df.groupby("run").size().min()
