@@ -73,6 +73,11 @@ class Patient:
         Whether the patient receives thrombectomy.
     admission_avoidance : bool or None
         Whether the patient avoids an admission by being seen in SDEC instead.
+    admission_avoidance_because_of_therapy : bool or None
+        Whether the patient avoids an admission by being seen in SDEC instead and would
+        not have avoided admission if therapy had not been available (True). Set to false
+        if an avoided admission that still would have been avoided even if the therapy provision
+        was not running.
     non_admitted_tia_ns_sm : bool or None
         Flag indicating if a TIA, Non-Stroke, or Stroke Mimic patient was
         not admitted.
@@ -200,6 +205,7 @@ class Patient:
         self.thrombectomy = None
 
         self.admission_avoidance = None
+        self.admission_avoided_because_of_therapy = None
         self.non_admitted_tia_ns_sm = None
 
         # NOTE: Additional items added by SR

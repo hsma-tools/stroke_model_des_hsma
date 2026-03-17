@@ -156,21 +156,51 @@ year{"" if self.sim_duration_days // 365 == 1 else "s"} and
         )
 
         # Number of patients who can avoid a full admission due to SDEC operating
-        self.avoid_yearly = (
-            self.df_trial_results["Number of Admissions Avoided In Run"]
-            / self.sim_duration_years
-        ).mean()
+        self.avoid_yearly = self.scale_to_year(
+            (self.df_trial_results["Number of Admissions Avoided In Run"]).mean()
+        )
 
         # Add range seen across different sim runs
-        self.avoid_yearly_min = (
-            self.df_trial_results["Number of Admissions Avoided In Run"]
-            / self.sim_duration_years
-        ).min()
+        self.avoid_yearly_min = self.scale_to_year(
+            (self.df_trial_results["Number of Admissions Avoided In Run"]).min()
+        )
 
-        self.avoid_yearly_max = (
-            self.df_trial_results["Number of Admissions Avoided In Run"]
-            / self.sim_duration_years
-        ).max()
+        self.avoid_yearly_max = self.scale_to_year(
+            (self.df_trial_results["Number of Admissions Avoided In Run"]).max()
+        )
+
+        # Ischaemic stroke admissions avoided
+        self.avoid_yearly_ischaemic = self.scale_to_year(
+            self.patient_df[
+                (self.patient_df["patient_diagnosis_type"].isin(["I"]))
+                & (self.patient_df["admission_avoidance"] == True)
+            ]
+            .groupby("run")
+            .size()
+            .mean()
+        )
+
+        # ICH stroke admissions avoided
+        self.avoid_yearly_ich = self.scale_to_year(
+            self.patient_df[
+                (self.patient_df["patient_diagnosis_type"].isin(["ICH"]))
+                & (self.patient_df["admission_avoidance"] == True)
+            ]
+            .groupby("run")
+            .size()
+            .mean()
+        )
+
+        # Admissions avoided through therapy provision
+        self.avoid_yearly_therapy = self.scale_to_year(
+            self.patient_df[
+                (self.patient_df["admission_avoidance"] == True)
+                & (self.patient_df["admission_avoidance_because_of_therapy"] == True)
+            ]
+            .groupby("run")
+            .size()
+            .mean()
+        )
 
         # Number of patients with a delayed admission to a stroke ward per year
         self.admit_delay_yearly = (

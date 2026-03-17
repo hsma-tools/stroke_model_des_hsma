@@ -913,6 +913,7 @@ class Model:
                         and patient.thrombolysis == False
                     ):
                         patient.admission_avoidance = True
+                        patient.admission_avoidance_because_of_therapy = False
 
                 elif g.therapy_sdec == True:
                     if (
@@ -921,8 +922,14 @@ class Model:
                         and patient.thrombolysis == False
                     ):
                         patient.admission_avoidance = True
+
+                        if patient.mrs_type > 1:
+                            patient.admission_avoidance_because_of_therapy = True
+                        else:
+                            patient.admission_avoidance_because_of_therapy = False
                 else:
                     patient.admission_avoidance = False
+                    patient.admission_avoidance_because_of_therapy = False
 
                 ##########################################################
                 # Non-admission - non-stroke, TIA and stroke mimic       #
@@ -936,6 +943,7 @@ class Model:
                     and patient.patient_diagnosis == 2
                 ):
                     patient.admission_avoidance = False
+                    patient.admission_avoidance_because_of_therapy = False
                     patient.non_admitted_tia_ns_sm = True
 
                     trace(
@@ -951,6 +959,7 @@ class Model:
                     and patient.patient_diagnosis > 2
                 ):
                     patient.admission_avoidance = False
+                    patient.admission_avoidance_because_of_therapy = False
                     patient.non_admitted_tia_ns_sm = True
                     trace(
                         time=self.env.now,
@@ -1075,6 +1084,7 @@ class Model:
                 and patient.patient_diagnosis > 2
             ):
                 patient.admission_avoidance = False
+                patient.admission_avoidance_because_of_therapy = False
                 patient.non_admitted_tia_ns_sm = True
                 trace(
                     time=self.env.now,
@@ -1108,6 +1118,7 @@ class Model:
         if not patient.admission_avoidance and not patient.non_admitted_tia_ns_sm:
             # Anyone who has made it to here has definitely not avoided admission
             patient.admission_avoidance = False
+            patient.admission_avoidance_because_of_therapy = False
 
             # These code assigns a time to the start q variable. In stroke care
             # delays can have serious consequence so modeling this is very
