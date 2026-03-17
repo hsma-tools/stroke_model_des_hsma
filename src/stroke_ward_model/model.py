@@ -908,7 +908,8 @@ class Model:
                 ###########################################################
                 if g.therapy_sdec == False:
                     if (
-                        patient.patient_diagnosis < 2
+                        # patient.patient_diagnosis < 2 # SR: CHANGED THIS 17/3 PENDING CONFIRMATION
+                        patient.patient_diagnosis == 1
                         and patient.mrs_type < 2
                         and patient.thrombolysis == False
                     ):
@@ -917,7 +918,8 @@ class Model:
 
                 elif g.therapy_sdec == True:
                     if (
-                        patient.patient_diagnosis < 2
+                        # patient.patient_diagnosis < 2 # SR: CHANGED THIS 17/3 PENDING CONFIRMATION
+                        patient.patient_diagnosis == 1
                         and patient.mrs_type <= 3
                         and patient.thrombolysis == False
                     ):
