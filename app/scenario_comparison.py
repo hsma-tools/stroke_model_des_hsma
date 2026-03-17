@@ -7,6 +7,8 @@ import numpy as np
 SCENARIO_PARAMS = {
     "sim_duration_days": ("Simulation Duration (days)", "days"),
     "sim_duration_years": ("Simulation Duration (years)", "years"),
+    "number_of_ward_beds": ("Number of beds in Ward", "beds"),
+    "sdec_beds": ("Number of beds in SDEC", "beds"),
     "start_hour_ctp": ("CTP Opening Hour", "hour"),
     "duration_hours_ctp": ("CTP Duration", "hours"),
     "end_hour_ctp": ("CTP Closing Hour", "hour"),
@@ -18,7 +20,7 @@ SCENARIO_PARAMS = {
     "max_patients_per_run": ("Max Patients per Run", "patients"),
     "average_patients_per_year": ("Average Patients per Year", "patients"),
     "average_patients_per_day": ("Average Patients per Day", "patients"),
-    "therapy_sdec": ("Therapy available in SDEC?", "True/False"),
+    "therapy_sdec": ("Therapy available in SDEC?", "True (1)/False (0)"),
     "thrombolysis_los_save": (
         "LoS proportion for thrombolysed patient versus unthrombolysed",
         "proportion",
@@ -34,7 +36,7 @@ SCENARIO_PARAMS = {
     ),
     "short_term_thrombolysis_savings": (
         "Short-term (LoS-based) thrombolysis savings calculated?",
-        "True/False",
+        "True (1)/False (0)",
     ),
     "inpatient_bed_cost_thrombolysis": (
         "Cost per saved bed day (thrombolysis LoS savings) - only used if looking at short-term thrombolysis savings",
@@ -321,6 +323,7 @@ def render_full_comparison_table():
                 if isinstance(metrics, Metrics)
                 else metrics.values.get(attr)
             )
+            val
             row[run["label"]] = (
                 round(float(val), 1)
                 if val is not None and not (isinstance(val, float) and np.isnan(val))
@@ -329,7 +332,7 @@ def render_full_comparison_table():
         rows.append(row)
 
     df = pd.DataFrame(rows).set_index(["Metric", "Unit"])
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width="stretch")
 
 
 @st.fragment
