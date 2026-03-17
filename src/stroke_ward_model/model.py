@@ -1177,307 +1177,34 @@ class Model:
 
                 patient.q_time_ward = end_q_ward - start_q_ward
 
-                # The below code checks the patients diagnosis and MRS,
-                # adjusting MRS change and LOS baised on these. This code is
-                # for ICH patients.
+                if patient.patient_diagnosis_type in ["ICH", "I"]:
+                    sampled_ward_act_time = getattr(
+                        self,
+                        f"{patient.patient_diagnosis_type.lower()}_ward_time_mrs_{patient.mrs_type}_dist",
+                    ).sample_within_bounds(minimum=1)
 
-                ###############################
-                # MARK: Patient diagnosis = 0 #
-                # Intracerebral haemorrhage   #
-                # Unsuitable for thrombolysis #
-                ###############################
-
-                if patient.patient_diagnosis == 0 and patient.mrs_type == 0:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_0_dist.sample_within_bounds(minimum=1)
-                    )
-                    patient.mrs_discharge = patient.mrs_type
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 0 and patient.mrs_type == 1:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_1_dist.sample_within_bounds(minimum=1)
-                    )
-                    # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                    patient.mrs_discharge = (
-                        patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                    )
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 0 and patient.mrs_type == 2:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_2_dist.sample_within_bounds(minimum=1)
-                    )
-                    # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                    patient.mrs_discharge = (
-                        patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                    )
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 0 and patient.mrs_type == 3:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_3_dist.sample_within_bounds(minimum=1)
-                    )
-                    # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                    patient.mrs_discharge = (
-                        patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                    )
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 0 and patient.mrs_type == 4:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_4_dist.sample_within_bounds(minimum=1)
-                    )
-                    # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                    patient.mrs_discharge = (
-                        patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                    )
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 0 and patient.mrs_type == 5:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_5_dist.sample_within_bounds(minimum=1)
-                    )
-                    # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                    patient.mrs_discharge = (
-                        patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                    )
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                ###############################
-                # MARK: Patient diagnosis = 1 #
-                # Ischaemic Stroke            #
-                # Some may be suitable for    #
-                # thrombolysis                #
-                ###############################
-
-                # The below code checks the patients diagnosis and MRS,
-                # adjusting MRS change and LOS baised on these. This code is
-                # for I patients amd also checks for thrombolysis and adjusts
-                # LOS and associated savings accordingly.
-
-                if patient.patient_diagnosis == 1 and patient.mrs_type == 0:
-                    sampled_ward_act_time = (
-                        self.i_ward_time_mrs_0_dist.sample_within_bounds(minimum=1)
-                    )
-                    patient.mrs_discharge = patient.mrs_type
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 1 and patient.mrs_type == 1:
-                    sampled_ward_act_time = (
-                        self.i_ward_time_mrs_1_dist.sample_within_bounds(minimum=1)
-                    )
-                    if patient.thrombolysis == True:
-                        sampled_ward_act_time_thrombolysis = (
-                            sampled_ward_act_time * g.thrombolysis_los_save
-                        )
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                        patient.mrs_discharge = (
-                            patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los_thrombolysis = (
-                            sampled_ward_act_time_thrombolysis
-                        )
-                        yield self.env.timeout(sampled_ward_act_time_thrombolysis)
-                        if (
-                            self.env.now > g.warm_up_period
-                            and patient.thrombolysis_enabled_by_ctp == True
-                        ):
-                            if g.short_term_thrombolysis_savings:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = (
-                                    (
-                                        (
-                                            sampled_ward_act_time
-                                            - sampled_ward_act_time_thrombolysis
-                                        )
-                                        / 60
-                                    )
-                                    / 24
-                                ) * g.inpatient_bed_cost_thrombolysis
-                            else:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = g.fixed_thrombolysis_saving_amount_long_term
-
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
-                    else:
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                        patient.mrs_discharge = (
-                            patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los = sampled_ward_act_time
-                        yield self.env.timeout(sampled_ward_act_time)
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 1 and patient.mrs_type == 2:
-                    sampled_ward_act_time = (
-                        self.i_ward_time_mrs_2_dist.sample_within_bounds(minimum=1)
-                    )
-                    if patient.thrombolysis == True:
-                        sampled_ward_act_time_thrombolysis = (
-                            sampled_ward_act_time * g.thrombolysis_los_save
-                        )
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 2)
+                    # Determine MRS at discharge
+                    if patient.mrs_type == 0:
+                        patient.mrs_discharge = patient.mrs_type
+                    elif patient.thrombolysis and patient.mrs_type >= 2:
                         patient.mrs_discharge = (
                             patient.mrs_type
                             - self.mrs_reduction_during_stay_thrombolysed.sample()
                         )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los_thrombolysis = (
-                            sampled_ward_act_time_thrombolysis
-                        )
-                        yield self.env.timeout(sampled_ward_act_time_thrombolysis)
-                        if (
-                            self.env.now > g.warm_up_period
-                            and patient.thrombolysis_enabled_by_ctp == True
-                        ):
-                            if g.short_term_thrombolysis_savings:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = (
-                                    (
-                                        (
-                                            sampled_ward_act_time
-                                            - sampled_ward_act_time_thrombolysis
-                                        )
-                                        / 60
-                                    )
-                                    / 24
-                                ) * g.inpatient_bed_cost_thrombolysis
-                            else:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = g.fixed_thrombolysis_saving_amount_long_term
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
                     else:
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                         patient.mrs_discharge = (
                             patient.mrs_type - self.mrs_reduction_during_stay.sample()
                         )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los = sampled_ward_act_time
-                        yield self.env.timeout(sampled_ward_act_time)
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
 
-                elif patient.patient_diagnosis == 1 and patient.mrs_type == 3:
-                    sampled_ward_act_time = (
-                        self.i_ward_time_mrs_3_dist.sample_within_bounds(minimum=1)
-                    )
-                    if patient.thrombolysis == True:
+                    # Handle thrombolysis path for ischaemic stroke
+                    if patient.thrombolysis:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
                         )
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 2)
-                        patient.mrs_discharge = (
-                            patient.mrs_type
-                            - self.mrs_reduction_during_stay_thrombolysed.sample()
-                        )
                         trace(
                             time=self.env.now,
                             debug=g.show_trace,
-                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
+                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis_type}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
                             identifier=patient.id,
                             config=g.trace_config,
                         )
@@ -1487,7 +1214,7 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.thrombolysis_enabled_by_ctp == True
+                            and patient.thrombolysis_enabled_by_ctp
                         ):
                             if g.short_term_thrombolysis_savings:
                                 self.results_df.at[
@@ -1506,239 +1233,83 @@ class Model:
                                 self.results_df.at[
                                     patient.id, "Thrombolysis Savings"
                                 ] = g.fixed_thrombolysis_saving_amount_long_term
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
                     else:
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                        patient.mrs_discharge = (
-                            patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                        )
                         trace(
                             time=self.env.now,
                             debug=g.show_trace,
-                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
+                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis_type}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
                             identifier=patient.id,
                             config=g.trace_config,
                         )
                         patient.ward_los = sampled_ward_act_time
                         yield self.env.timeout(sampled_ward_act_time)
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
 
-                elif patient.patient_diagnosis == 1 and patient.mrs_type == 4:
-                    sampled_ward_act_time = (
-                        self.i_ward_time_mrs_4_dist.sample_within_bounds(minimum=1)
-                    )
-                    if patient.thrombolysis == True:
-                        sampled_ward_act_time_thrombolysis = (
-                            sampled_ward_act_time * g.thrombolysis_los_save
-                        )
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 2)
-                        patient.mrs_discharge = (
-                            patient.mrs_type
-                            - self.mrs_reduction_during_stay_thrombolysed.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los_thrombolysis = (
-                            sampled_ward_act_time_thrombolysis
-                        )
-                        yield self.env.timeout(sampled_ward_act_time_thrombolysis)
-                        if (
-                            self.env.now > g.warm_up_period
-                            and patient.thrombolysis_enabled_by_ctp == True
-                        ):
-                            if g.short_term_thrombolysis_savings:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = (
-                                    (
-                                        (
-                                            sampled_ward_act_time
-                                            - sampled_ward_act_time_thrombolysis
-                                        )
-                                        / 60
-                                    )
-                                    / 24
-                                ) * g.inpatient_bed_cost_thrombolysis
-                            else:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = g.fixed_thrombolysis_saving_amount_long_term
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
-                    else:
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                        patient.mrs_discharge = (
-                            patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los = sampled_ward_act_time
-                        yield self.env.timeout(sampled_ward_act_time)
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
+                    patient.ward_discharge_time = self.env.now
+                    self.ward_occupancy.remove(patient)
 
-                elif patient.patient_diagnosis == 1 and patient.mrs_type == 5:
-                    sampled_ward_act_time = (
-                        self.i_ward_time_mrs_5_dist.sample_within_bounds(minimum=1)
-                    )
-                    if patient.thrombolysis == True:
-                        sampled_ward_act_time_thrombolysis = (
-                            sampled_ward_act_time * g.thrombolysis_los_save
-                        )
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 2)
-                        patient.mrs_discharge = (
-                            patient.mrs_type
-                            - self.mrs_reduction_during_stay_thrombolysed.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        # Record generated LOS in patient object
-                        patient.ward_los_thrombolysis = (
-                            sampled_ward_act_time_thrombolysis
-                        )
-                        yield self.env.timeout(sampled_ward_act_time_thrombolysis)
-                        if (
-                            self.env.now > g.warm_up_period
-                            and patient.thrombolysis_enabled_by_ctp == True
-                        ):
-                            if g.short_term_thrombolysis_savings:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = (
-                                    (
-                                        (
-                                            sampled_ward_act_time
-                                            - sampled_ward_act_time_thrombolysis
-                                        )
-                                        / 60
-                                    )
-                                    / 24
-                                ) * g.inpatient_bed_cost_thrombolysis
-                            else:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = g.fixed_thrombolysis_saving_amount_long_term
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
-                    else:
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                        patient.mrs_discharge = (
-                            patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        # Record generated LOS in patient object
-                        patient.ward_los = sampled_ward_act_time
-                        yield self.env.timeout(sampled_ward_act_time)
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
-
-                #################################
-                # MARK: Patient diagnosis = 2   #
-                # Transient Ischaemic Attack    #
-                # Not suitable for thrombolysis #
-                #################################
-                # The below code is for the non stroke diagnosis.
-
-                if patient.patient_diagnosis == 2:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_tia_ward_time
-                    # )
+                elif patient.patient_diagnosis_type == "TIA":
                     sampled_ward_act_time = (
                         self.tia_ward_time_dist.sample_within_bounds(minimum=1)
                     )
                     trace(
                         time=self.env.now,
                         debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
+                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis_type}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
                         identifier=patient.id,
                         config=g.trace_config,
                     )
-                    # Record generated LOS in patient object
                     patient.ward_los = sampled_ward_act_time
                     yield self.env.timeout(sampled_ward_act_time)
                     patient.ward_discharge_time = self.env.now
                     self.ward_occupancy.remove(patient)
 
-                ###############################
-                # MARK: Patient diagnosis > 2 #
-                # Stroke mimic OR non-stroke  #
-                ###############################
-                if patient.patient_diagnosis > 2:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_non_stroke_ward_time
-                    # )
+                else:  # diag > 2 — stroke mimic / non-stroke
                     sampled_ward_act_time = (
                         self.non_stroke_ward_time_dist.sample_within_bounds(minimum=1)
                     )
-
                     trace(
                         time=self.env.now,
                         debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
+                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis_type}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
                         identifier=patient.id,
                         config=g.trace_config,
                     )
-
-                    # Record generated LOS in patient object
                     patient.ward_los = sampled_ward_act_time
                     yield self.env.timeout(sampled_ward_act_time)
                     patient.ward_discharge_time = self.env.now
                     self.ward_occupancy.remove(patient)
 
-            # Relevent information is recorded in the results DataFrame.
-            if self.env.now > g.warm_up_period:
-                self.results_df.at[patient.id, "Q Time Ward"] = patient.q_time_ward
+                # Relevent information is recorded in the results DataFrame.
+                if self.env.now > g.warm_up_period:
+                    self.results_df.at[patient.id, "Q Time Ward"] = patient.q_time_ward
 
-            # TODO: SR: I've tweaked this to take whichever of the ward_los or thrombolysis los is generated
-            # TODO SR: It would be better to take a more robust approach to this step.
-            try:
-                final_ward_los = sampled_ward_act_time
-            except:
-                final_ward_los = sampled_ward_act_time_thrombolysis
+                # TODO: SR: I've tweaked this to take whichever of the ward_los or thrombolysis los is generated
+                # TODO SR: It would be better to take a more robust approach to this step.
+                try:
+                    final_ward_los = sampled_ward_act_time
+                except:
+                    final_ward_los = sampled_ward_act_time_thrombolysis
 
-            if self.env.now > g.warm_up_period:
-                self.results_df.at[patient.id, "Ward LOS"] = final_ward_los
+                if self.env.now > g.warm_up_period:
+                    self.results_df.at[patient.id, "Ward LOS"] = final_ward_los
 
-                self.results_df.at[patient.id, "MRS DC"] = patient.mrs_discharge
+                    self.results_df.at[patient.id, "MRS DC"] = patient.mrs_discharge
 
-                self.results_df.at[patient.id, "MRS Change"] = (
-                    patient.mrs_type - patient.mrs_discharge
+                    self.results_df.at[patient.id, "MRS Change"] = (
+                        patient.mrs_type - patient.mrs_discharge
+                    )
+
+                # MARK: Discharged from main ward
+                trace(
+                    time=self.env.now,
+                    debug=g.show_trace,
+                    msg=f"🚗 Patient {patient.id} discharged from main ward at {minutes_to_ampm(int(self.env.now % 1440))} after {final_ward_los:.1f} minutes ({(final_ward_los / 24 / 60):.1f} days). Occupancy after discharge: {len(self.ward_occupancy)} of {g.number_of_ward_beds} ward beds",
+                    identifier=patient.id,
+                    config=g.trace_config,
                 )
 
-            # MARK: Discharged from main ward
-            trace(
-                time=self.env.now,
-                debug=g.show_trace,
-                msg=f"🚗 Patient {patient.id} discharged from main ward at {minutes_to_ampm(int(self.env.now % 1440))} after {final_ward_los:.1f} minutes ({(final_ward_los / 24 / 60):.1f} days). Occupancy after discharge: {len(self.ward_occupancy)} of {g.number_of_ward_beds} ward beds",
-                identifier=patient.id,
-                config=g.trace_config,
-            )
-
-            patient.exit_time = self.env.now
-            patient.journey_completed = True
+                patient.exit_time = self.env.now
+                patient.journey_completed = True
 
         # Record patients who exited at any remaining points
         patient.exit_time = self.env.now
