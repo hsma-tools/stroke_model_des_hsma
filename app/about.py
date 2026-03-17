@@ -75,3 +75,37 @@ with tab_model:
 
     st.header("Can I adapt and use the model with my own trust?")
     st.write("Coming Soon!")
+
+    st.header("What assumptions and simplifications have been made in the model?")
+
+    st.write("### Assumptions")
+    st.write("""
+- If demand increases, it will increase equally across all patient types (ischaemic stroke,
+intracerebral haemhorrhage, transient ischaemic attack, stroke mimics, non-stroke)
+- Stroke type (I/ICH/TIA/mimic/non) and severity (MRS score) does not vary with time of day
+- Stroke demand does not exhibit weekly or yearly seasonality (i.e. incidence does not change across
+the days of the week or the months of the year)
+- If the main stroke ward is full,
+- By default, each SDEC admission avoidance is assumed to avoid a LOS of two days, though this
+is a parameter which can be adjusted in the web app
+- By default, thrombolysis is assumed to reduce a patient's stay to 75% of what it would have been
+
+""")
+
+    st.write("### Simplifications")
+    st.write("""
+- Patients will queue indefinitely for a stroke bed in the stroke ward
+- Thrombectomy (mechanical clot removal) is not offered
+- All patients meeting the criteria for admission avoidance will avoid admission (i.e. no contraindications are modelled)
+- The severity of strokes (in terms of MRS on admission) does not vary by the type of stroke
+- While the onset type of strokes can vary across the course of the day, this cannot be set
+independently of the times considered to be in-hours and out-of-hours demand (i.e. they are
+effectively linked in the model)
+- Patients can be discharged at any time of day
+- If the SDEC is full when a patient requires it, they will move straight to queueing or getting
+a bed in the main ward (as opposed to entering the SDEC if space becomes available shortly after
+they first attempt to enter it)
+- If the stroke ward is full and there are patients either waiting to move from the SDEC to the main
+ward or queuing directly for entry to the main ward, those not in SDEC will always be prioritised
+over those waiting to move from the SDEC to the main ward.
+                          """)
