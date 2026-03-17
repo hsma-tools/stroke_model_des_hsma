@@ -1244,9 +1244,6 @@ class Model:
                         patient.ward_los = sampled_ward_act_time
                         yield self.env.timeout(sampled_ward_act_time)
 
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
                 elif patient.patient_diagnosis_type == "TIA":
                     sampled_ward_act_time = (
                         self.tia_ward_time_dist.sample_within_bounds(minimum=1)
@@ -1260,8 +1257,6 @@ class Model:
                     )
                     patient.ward_los = sampled_ward_act_time
                     yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
 
                 else:  # diag > 2 — stroke mimic / non-stroke
                     sampled_ward_act_time = (
@@ -1276,8 +1271,9 @@ class Model:
                     )
                     patient.ward_los = sampled_ward_act_time
                     yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
+
+                patient.ward_discharge_time = self.env.now
+                self.ward_occupancy.remove(patient)
 
                 # Relevent information is recorded in the results DataFrame.
                 if self.env.now > g.warm_up_period:
