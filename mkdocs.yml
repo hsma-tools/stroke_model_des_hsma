@@ -1,6 +1,6 @@
 site_name: Stroke Unit DES
-site_url: https://sammirosser.com/jw_hsma_des_stroke_project
-repo_url: https://github.com/Bergam0t/jw_hsma_des_stroke_project
+site_url: https://hsma-tools.github.io/jw_hsma_des_stroke_project/
+repo_url: https://github.com/hsma-tools/stroke_model_des_hsma
 
 theme:
   name: material
