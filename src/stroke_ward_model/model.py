@@ -661,7 +661,9 @@ class Model:
             # a Log normal one (though the intense variation in the real life
             # consult time might mean a exponetial distribution is better)
             # sampled_nurse_act_time = random.expovariate(1.0 / g.mean_n_consult_time)
-            sampled_nurse_act_time = self.nurse_consult_time_dist.sample()
+            sampled_nurse_act_time = self.nurse_consult_time_dist.sample_within_bounds(
+                minimum=5
+            )
 
             # Freeze this function in place for the activity time we sampled
             # above.  This is the patient spending time with the nurse.
@@ -704,7 +706,7 @@ class Model:
             # be updated to a log normal distribution
 
             # sampled_ctp_act_time = random.expovariate(1.0 / g.mean_n_ct_time)
-            sampled_ctp_act_time = self.ct_time_dist.sample()
+            sampled_ctp_act_time = self.ct_time_dist.sample_within_bounds(minimum=15)
             patient.ctp_duration = sampled_ctp_act_time
             # Freeze this function in place for the activity time that was
             # sampled above.
@@ -743,7 +745,7 @@ class Model:
             patient.ct_scan_start_time = self.env.now
 
             # sampled_ct_act_time = random.expovariate(1.0 / g.mean_n_ct_time)
-            sampled_ct_act_time = self.ct_time_dist.sample()
+            sampled_ct_act_time = self.ct_time_dist.sample_within_bounds(minimum=15)
             patient.ct_duration = sampled_ct_act_time
 
             yield self.env.timeout(sampled_ct_act_time)
@@ -859,167 +861,182 @@ class Model:
             # animating it correctly. However, we still need to hold it for the
             # duration of this code block so that someone else doesn't end up
             # in the same bed!
-            with self.sdec_bed.request() as req:
-                sdec_bed_used = yield req
-                patient.sdec_bed_id = sdec_bed_used.id_attribute
+            sdec_bed_used = yield self.sdec_bed.get_direct()
+            patient.sdec_bed_id = sdec_bed_used.id_attribute
 
-                patient.sdec_admit_time = self.env.now
+            patient.sdec_admit_time = self.env.now
 
-                trace(
-                    time=self.env.now,
-                    debug=g.show_trace,
-                    msg=f"🛏️🏎️ Patient {patient.id} admitted to SDEC (occupancy before admission: {len(self.sdec_occupancy)} of {g.sdec_beds} SDEC beds) at {minutes_to_ampm(int(self.env.now % 1440))}.",
-                    identifier=patient.id,
-                    config=g.trace_config,
+            trace(
+                time=self.env.now,
+                debug=g.show_trace,
+                msg=f"🛏️🏎️ Patient {patient.id} admitted to SDEC (occupancy before admission: {len(self.sdec_occupancy)} of {g.sdec_beds} SDEC beds) at {minutes_to_ampm(int(self.env.now % 1440))}.",
+                identifier=patient.id,
+                config=g.trace_config,
+            )
+
+            self.sdec_occupancy.append(patient)
+
+            # The below code record the SDEC Occupancy as the patient passes
+            # this point to ensure it is working as expected.
+
+            if self.env.now > g.warm_up_period:
+                self.results_df.at[patient.id, "SDEC Occupancy"] = len(
+                    self.sdec_occupancy
                 )
 
-                self.sdec_occupancy.append(patient)
+                self.sdec_occupancy_graph_df.loc[len(self.sdec_occupancy_graph_df)] = [
+                    self.env.now,
+                    len(self.sdec_occupancy),
+                    False,
+                ]
+            else:
+                self.sdec_occupancy_graph_df.loc[len(self.sdec_occupancy_graph_df)] = [
+                    self.env.now,
+                    len(self.sdec_occupancy),
+                    True,
+                ]
 
-                # The below code record the SDEC Occupancy as the patient passes
-                # this point to ensure it is working as expected.
+            patient.sdec_pathway = True
 
-                if self.env.now > g.warm_up_period:
-                    self.results_df.at[patient.id, "SDEC Occupancy"] = len(
-                        self.sdec_occupancy
-                    )
-
-                    self.sdec_occupancy_graph_df.loc[
-                        len(self.sdec_occupancy_graph_df)
-                    ] = [
-                        self.env.now,
-                        len(self.sdec_occupancy),
-                        False,
-                    ]
-                else:
-                    self.sdec_occupancy_graph_df.loc[
-                        len(self.sdec_occupancy_graph_df)
-                    ] = [
-                        self.env.now,
-                        len(self.sdec_occupancy),
-                        True,
-                    ]
-
-                patient.sdec_pathway = True
-
-                ###########################################################
-                # ADMISSION AVOIDANCE
-                # This code checks if the patient is eligible for admission
-                # avoidance depending on if therapy support is enabled.
-                ###########################################################
-                if g.therapy_sdec == False:
-                    if (
-                        patient.patient_diagnosis < 2
-                        and patient.mrs_type < 2
-                        and patient.thrombolysis == False
-                    ):
-                        patient.admission_avoidance = True
-
-                elif g.therapy_sdec == True:
-                    if (
-                        patient.patient_diagnosis < 2
-                        and patient.mrs_type <= 3
-                        and patient.thrombolysis == False
-                    ):
-                        patient.admission_avoidance = True
-                else:
-                    patient.admission_avoidance = False
-
-                ##########################################################
-                # Non-admission - non-stroke, TIA and stroke mimic       #
-                ##########################################################
-                # For patients who have TIA, non-stroke or stroke mimic,
-                # they have a high chance of avoiding admission, but this
-                # is not counted in the same way
-
+            ###########################################################
+            # ADMISSION AVOIDANCE
+            # This code checks if the patient is eligible for admission
+            # avoidance depending on if therapy support is enabled.
+            ###########################################################
+            if g.therapy_sdec == False:
                 if (
-                    patient.non_admission >= self.tia_admission_chance
-                    and patient.patient_diagnosis == 2
+                    # SR: CHANGED THIS from <2 on 17/3 - see below
+                    patient.patient_diagnosis == 1
+                    and patient.mrs_type < 2
+                    and patient.thrombolysis == False
                 ):
-                    patient.admission_avoidance = False
-                    patient.non_admitted_tia_ns_sm = True
+                    patient.admission_avoidance = True
+                    patient.admission_avoidance_because_of_therapy = False
+                # SR 17/3/26 I've added this after talking to JW about historical patterns
+                # as ICH patients are technically eligible for same day discharge and it
+                # does happen, but it's rarer than for ischaemic stroke
+                # Have slightly elevated it above the reported rate as known figure is based on
+                # those who could be discharged because SDEC operating, so presumably the raw
+                # figure eligible is slightly higher
+                elif patient.patient_diagnosis == 0:
+                    if self.ich_same_day_discharge_chance.sample() <= 0.2:
+                        patient.admission_avoidance = True
+                        patient.admission_avoidance_because_of_therapy = False
 
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"↩️ TIA Patient {patient.id} avoided admission.",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-
-                elif (
-                    patient.non_admission >= self.stroke_mimic_admission_chance
-                    and patient.patient_diagnosis > 2
-                ):
-                    patient.admission_avoidance = False
-                    patient.non_admitted_tia_ns_sm = True
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"↩️ Stroke mimic or non-stroke Patient {patient.id} (diagnosis {patient.diagnosis}) avoided admission.",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                else:
-                    patient.non_admitted_tia_ns_sm = False
-
-                # Calculate SDEC stay time from exponential
-                # sampled_sdec_stay_time = random.expovariate(1.0 / g.mean_n_sdec_time)
-                sampled_sdec_stay_time = self.sdec_time_dist.sample()
-
-                # Add patient SDEC LOS to their patient object
-                patient.sdec_los = sampled_sdec_stay_time
-
-                # Freeze this function in place for the activity time we sampled
-                # above.
-                trace(
-                    time=self.env.now,
-                    debug=g.show_trace,
-                    msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in SDEC for {sampled_sdec_stay_time:.1f} minutes ({(sampled_sdec_stay_time / 60 / 24):.1f} days).",
-                    identifier=patient.id,
-                    config=g.trace_config,
-                )
-
-                yield self.env.timeout(sampled_sdec_stay_time)
-
-                # This code checks if the ward is full, if this is the case the
-                # patient will not be released from the SDEC, thus impeding it use
-
+            elif g.therapy_sdec == True:
                 if (
-                    not patient.admission_avoidance
-                    and not patient.non_admitted_tia_ns_sm
+                    # SR: CHANGED THIS from <2 on 17/3 - see below
+                    patient.patient_diagnosis == 1
+                    and patient.mrs_type <= 3
+                    and patient.thrombolysis == False
                 ):
-                    while len(self.ward_occupancy) >= g.number_of_ward_beds:
-                        yield self.env.timeout(1)
+                    patient.admission_avoidance = True
 
-                # Once the above code is complete the patient is removed from the
-                # SDEC occupancy list.
+                    if patient.mrs_type > 1:
+                        patient.admission_avoidance_because_of_therapy = True
+                    else:
+                        patient.admission_avoidance_because_of_therapy = False
 
-                self.sdec_occupancy.remove(patient)
-                patient.sdec_discharge_time = self.env.now
+                # SR 17/3/26 I've added this after talking to JW about historical patterns
+                # as ICH patients are technically eligible for same day discharge and it
+                # does happen, but it's rarer than for ischaemic stroke
+                # Have slightly elevated it above the reported rate as known figure is based on
+                # those who could be discharged because SDEC operating, so presumably the raw
+                # figure eligible is slightly higher
+                elif patient.patient_diagnosis == 0:
+                    if self.ich_same_day_discharge_chance.sample() <= 0.2:
+                        patient.admission_avoidance = True
+                        patient.admission_avoidance_because_of_therapy = False
+            else:
+                patient.admission_avoidance = False
+                patient.admission_avoidance_because_of_therapy = False
 
-                # Code to record the SDEC stay time in the results DataFrame.
-                if self.env.now > g.warm_up_period:
-                    self.results_df.at[patient.id, "Time in SDEC"] = (
-                        sampled_sdec_stay_time
-                    )
+            ##########################################################
+            # Non-admission - non-stroke, TIA and stroke mimic       #
+            ##########################################################
+            # For patients who have TIA, non-stroke or stroke mimic,
+            # they have a high chance of avoiding admission, but this
+            # is not counted in the same way
 
-                # MARK: Discharged from SDEC
+            if (
+                patient.non_admission >= self.tia_admission_chance
+                and patient.patient_diagnosis == 2
+            ):
+                patient.admission_avoidance = False
+                patient.admission_avoidance_because_of_therapy = False
+                patient.non_admitted_tia_ns_sm = True
+
                 trace(
                     time=self.env.now,
                     debug=g.show_trace,
-                    msg=f"🏎️ Patient {patient.id} discharged from SDEC at {minutes_to_ampm(int(self.env.now % 1440))} after {patient.sdec_los:.1f} minutes ({(patient.sdec_los / 60 / 24):.1f} days). Occupancy after discharge: {len(self.sdec_occupancy)} of {g.sdec_beds} SDEC beds",
+                    msg=f"↩️ TIA Patient {patient.id} avoided admission.",
                     identifier=patient.id,
                     config=g.trace_config,
                 )
+
+            elif (
+                patient.non_admission >= self.stroke_mimic_admission_chance
+                and patient.patient_diagnosis > 2
+            ):
+                patient.admission_avoidance = False
+                patient.admission_avoidance_because_of_therapy = False
+                patient.non_admitted_tia_ns_sm = True
+                trace(
+                    time=self.env.now,
+                    debug=g.show_trace,
+                    msg=f"↩️ Stroke mimic or non-stroke Patient {patient.id} (diagnosis {patient.diagnosis}) avoided admission.",
+                    identifier=patient.id,
+                    config=g.trace_config,
+                )
+            else:
+                patient.non_admitted_tia_ns_sm = False
+
+            # Calculate SDEC stay time from exponential
+            # sampled_sdec_stay_time = random.expovariate(1.0 / g.mean_n_sdec_time)
+            sampled_sdec_stay_time = self.sdec_time_dist.sample_within_bounds(
+                minimum=60
+            )
+
+            # Add patient SDEC LOS to their patient object
+            patient.sdec_los = sampled_sdec_stay_time
+
+            # Freeze this function in place for the activity time we sampled
+            # above.
+            trace(
+                time=self.env.now,
+                debug=g.show_trace,
+                msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in SDEC for {sampled_sdec_stay_time:.1f} minutes ({(sampled_sdec_stay_time / 60 / 24):.1f} days).",
+                identifier=patient.id,
+                config=g.trace_config,
+            )
+
+            yield self.env.timeout(sampled_sdec_stay_time)
+
+            # Code to record the SDEC stay time in the results DataFrame.
+            if self.env.now > g.warm_up_period:
+                self.results_df.at[patient.id, "Time in SDEC"] = sampled_sdec_stay_time
+
+            # MARK: Discharged from SDEC
+            trace(
+                time=self.env.now,
+                debug=g.show_trace,
+                msg=f"🏎️ Patient {patient.id} discharged from SDEC at {minutes_to_ampm(int(self.env.now % 1440))} after {patient.sdec_los:.1f} minutes ({(patient.sdec_los / 60 / 24):.1f} days). Occupancy after discharge: {len(self.sdec_occupancy)} of {g.sdec_beds} SDEC beds",
+                identifier=patient.id,
+                config=g.trace_config,
+            )
 
             ##########################################
             # MARK: Admission Avoidance cost savings
             ##########################################
             # This code add information regarding the patients admission avoidance.
 
-            if patient.admission_avoidance == True and patient.patient_diagnosis < 2:
+            if patient.admission_avoidance == True:
                 # Regardless of whether the warm-up has passed, recording in
                 # patient object that this patient's journey was completed
+                self.sdec_occupancy.remove(patient)
+                self.sdec_bed.put(sdec_bed_used)
+
+                patient.sdec_discharge_time = self.env.now
                 patient.exit_time = self.env.now
                 patient.journey_completed = True
 
@@ -1037,12 +1054,17 @@ class Model:
                         g.inpatient_bed_cost * g.sdec_bed_day_saving
                     )
 
+            # Make sure we also record an exit time for the non-stroke/tia/stroke mimic patients
+            # who are exiting after they've been seen in the SDEC
             # This code exists after the admission avoidance code so they
             # are not added to the admission avoidance list, as that should
             # only be for SDEC patients who avoid admission.
             # This code ensures that these patients get an exit time
 
             if patient.non_admitted_tia_ns_sm == True:
+                self.sdec_occupancy.remove(patient)
+                self.sdec_bed.put(sdec_bed_used)
+                patient.sdec_discharge_time = self.env.now
                 patient.exit_time = self.env.now
                 patient.journey_completed = True
 
@@ -1075,6 +1097,7 @@ class Model:
                 and patient.patient_diagnosis > 2
             ):
                 patient.admission_avoidance = False
+                patient.admission_avoidance_because_of_therapy = False
                 patient.non_admitted_tia_ns_sm = True
                 trace(
                     time=self.env.now,
@@ -1108,23 +1131,38 @@ class Model:
         if not patient.admission_avoidance and not patient.non_admitted_tia_ns_sm:
             # Anyone who has made it to here has definitely not avoided admission
             patient.admission_avoidance = False
+            patient.admission_avoidance_because_of_therapy = False
 
             # These code assigns a time to the start q variable. In stroke care
             # delays can have serious consequence so modeling this is very
             # important as flow disruption are a common issue.
-
-            start_q_ward = self.env.now
-            patient.ward_q_start_time = self.env.now
+            if not patient.sdec_pathway:
+                start_q_ward = self.env.now
+                patient.ward_q_start_time = self.env.now
 
             # Request the ward bed and hold the patient in a queue until this
             # is met.
 
             with self.ward_bed.request() as req:
                 ward_bed_used = yield req
+                # They've now obtained a ward bed so we can remove them from the SDEC
+                patient.ward_admit_time = self.env.now
+                # The patient attribute for the queuing time in the ward is
+                # assigned here.
+                if not patient.sdec_pathway:
+                    end_q_ward = self.env.now
+                    patient.q_time_ward = end_q_ward - start_q_ward
+
+                elif patient.sdec_pathway:
+                    self.sdec_occupancy.remove(patient)
+                    self.sdec_bed.put(sdec_bed_used)
+                    patient.sdec_discharge_time = self.env.now
+
                 patient.ward_bed_id = ward_bed_used.id_attribute
                 # Add patient to the ward list
 
                 self.ward_occupancy.append(patient)
+
                 trace(
                     time=self.env.now,
                     debug=g.show_trace,
@@ -1132,8 +1170,6 @@ class Model:
                     identifier=patient.id,
                     config=g.trace_config,
                 )
-
-                patient.ward_admit_time = self.env.now
 
                 if self.env.now > g.warm_up_period:
                     self.results_df.at[patient.id, "Ward Occupancy"] = len(
@@ -1157,314 +1193,34 @@ class Model:
                         True,
                     ]
 
-                # The patient attribute for the queuing time in the ward is
-                # assigned here.
+                if patient.patient_diagnosis_type in ["ICH", "I"]:
+                    sampled_ward_act_time = getattr(
+                        self,
+                        f"{patient.patient_diagnosis_type.lower()}_ward_time_mrs_{patient.mrs_type}_dist",
+                    ).sample_within_bounds(minimum=60 * 24 * 0.5)
 
-                end_q_ward = self.env.now
-
-                patient.q_time_ward = end_q_ward - start_q_ward
-
-                # The below code checks the patients diagnosis and MRS,
-                # adjusting MRS change and LOS baised on these. This code is
-                # for ICH patients.
-
-                ###############################
-                # MARK: Patient diagnosis = 0 #
-                # Intracerebral haemorrhage   #
-                # Unsuitable for thrombolysis #
-                ###############################
-
-                if patient.patient_diagnosis == 0 and patient.mrs_type == 0:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_0_dist.sample_within_bounds(minimum=1)
-                    )
-                    patient.mrs_discharge = patient.mrs_type
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 0 and patient.mrs_type == 1:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_1_dist.sample_within_bounds(minimum=1)
-                    )
-                    # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                    patient.mrs_discharge = (
-                        patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                    )
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 0 and patient.mrs_type == 2:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_2_dist.sample_within_bounds(minimum=1)
-                    )
-                    # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                    patient.mrs_discharge = (
-                        patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                    )
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 0 and patient.mrs_type == 3:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_3_dist.sample_within_bounds(minimum=1)
-                    )
-                    # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                    patient.mrs_discharge = (
-                        patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                    )
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 0 and patient.mrs_type == 4:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_4_dist.sample_within_bounds(minimum=1)
-                    )
-                    # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                    patient.mrs_discharge = (
-                        patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                    )
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 0 and patient.mrs_type == 5:
-                    sampled_ward_act_time = (
-                        self.ich_ward_time_mrs_5_dist.sample_within_bounds(minimum=1)
-                    )
-                    # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                    patient.mrs_discharge = (
-                        patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                    )
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                ###############################
-                # MARK: Patient diagnosis = 1 #
-                # Ischaemic Stroke            #
-                # Some may be suitable for    #
-                # thrombolysis                #
-                ###############################
-
-                # The below code checks the patients diagnosis and MRS,
-                # adjusting MRS change and LOS baised on these. This code is
-                # for I patients amd also checks for thrombolysis and adjusts
-                # LOS and associated savings accordingly.
-
-                if patient.patient_diagnosis == 1 and patient.mrs_type == 0:
-                    sampled_ward_act_time = (
-                        self.i_ward_time_mrs_0_dist.sample_within_bounds(minimum=1)
-                    )
-                    patient.mrs_discharge = patient.mrs_type
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                    patient.ward_los = sampled_ward_act_time
-                    yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 1 and patient.mrs_type == 1:
-                    sampled_ward_act_time = (
-                        self.i_ward_time_mrs_1_dist.sample_within_bounds(minimum=1)
-                    )
-                    if patient.thrombolysis == True:
-                        sampled_ward_act_time_thrombolysis = (
-                            sampled_ward_act_time * g.thrombolysis_los_save
-                        )
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                        patient.mrs_discharge = (
-                            patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los_thrombolysis = (
-                            sampled_ward_act_time_thrombolysis
-                        )
-                        yield self.env.timeout(sampled_ward_act_time_thrombolysis)
-                        if (
-                            self.env.now > g.warm_up_period
-                            and patient.thrombolysis_enabled_by_ctp == True
-                        ):
-                            if g.short_term_thrombolysis_savings:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = (
-                                    (
-                                        (
-                                            sampled_ward_act_time
-                                            - sampled_ward_act_time_thrombolysis
-                                        )
-                                        / 60
-                                    )
-                                    / 24
-                                ) * g.inpatient_bed_cost_thrombolysis
-                            else:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = g.fixed_thrombolysis_saving_amount_long_term
-
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
-                    else:
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                        patient.mrs_discharge = (
-                            patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los = sampled_ward_act_time
-                        yield self.env.timeout(sampled_ward_act_time)
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 1 and patient.mrs_type == 2:
-                    sampled_ward_act_time = (
-                        self.i_ward_time_mrs_2_dist.sample_within_bounds(minimum=1)
-                    )
-                    if patient.thrombolysis == True:
-                        sampled_ward_act_time_thrombolysis = (
-                            sampled_ward_act_time * g.thrombolysis_los_save
-                        )
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 2)
+                    # Determine MRS at discharge
+                    if patient.mrs_type == 0:
+                        patient.mrs_discharge = patient.mrs_type
+                    elif patient.thrombolysis and patient.mrs_type >= 2:
                         patient.mrs_discharge = (
                             patient.mrs_type
                             - self.mrs_reduction_during_stay_thrombolysed.sample()
                         )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los_thrombolysis = (
-                            sampled_ward_act_time_thrombolysis
-                        )
-                        yield self.env.timeout(sampled_ward_act_time_thrombolysis)
-                        if (
-                            self.env.now > g.warm_up_period
-                            and patient.thrombolysis_enabled_by_ctp == True
-                        ):
-                            if g.short_term_thrombolysis_savings:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = (
-                                    (
-                                        (
-                                            sampled_ward_act_time
-                                            - sampled_ward_act_time_thrombolysis
-                                        )
-                                        / 60
-                                    )
-                                    / 24
-                                ) * g.inpatient_bed_cost_thrombolysis
-                            else:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = g.fixed_thrombolysis_saving_amount_long_term
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
                     else:
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
                         patient.mrs_discharge = (
                             patient.mrs_type - self.mrs_reduction_during_stay.sample()
                         )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los = sampled_ward_act_time
-                        yield self.env.timeout(sampled_ward_act_time)
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
 
-                elif patient.patient_diagnosis == 1 and patient.mrs_type == 3:
-                    sampled_ward_act_time = (
-                        self.i_ward_time_mrs_3_dist.sample_within_bounds(minimum=1)
-                    )
-                    if patient.thrombolysis == True:
+                    # Handle thrombolysis path for ischaemic stroke
+                    if patient.thrombolysis:
                         sampled_ward_act_time_thrombolysis = (
                             sampled_ward_act_time * g.thrombolysis_los_save
                         )
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 2)
-                        patient.mrs_discharge = (
-                            patient.mrs_type
-                            - self.mrs_reduction_during_stay_thrombolysed.sample()
-                        )
                         trace(
                             time=self.env.now,
                             debug=g.show_trace,
-                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
+                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis_type}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
                             identifier=patient.id,
                             config=g.trace_config,
                         )
@@ -1474,7 +1230,7 @@ class Model:
                         yield self.env.timeout(sampled_ward_act_time_thrombolysis)
                         if (
                             self.env.now > g.warm_up_period
-                            and patient.thrombolysis_enabled_by_ctp == True
+                            and patient.thrombolysis_enabled_by_ctp
                         ):
                             if g.short_term_thrombolysis_savings:
                                 self.results_df.at[
@@ -1493,239 +1249,83 @@ class Model:
                                 self.results_df.at[
                                     patient.id, "Thrombolysis Savings"
                                 ] = g.fixed_thrombolysis_saving_amount_long_term
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
                     else:
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                        patient.mrs_discharge = (
-                            patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                        )
                         trace(
                             time=self.env.now,
                             debug=g.show_trace,
-                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
+                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis_type}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
                             identifier=patient.id,
                             config=g.trace_config,
                         )
                         patient.ward_los = sampled_ward_act_time
                         yield self.env.timeout(sampled_ward_act_time)
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
 
-                elif patient.patient_diagnosis == 1 and patient.mrs_type == 4:
+                elif patient.patient_diagnosis_type == "TIA":
                     sampled_ward_act_time = (
-                        self.i_ward_time_mrs_4_dist.sample_within_bounds(minimum=1)
-                    )
-                    if patient.thrombolysis == True:
-                        sampled_ward_act_time_thrombolysis = (
-                            sampled_ward_act_time * g.thrombolysis_los_save
+                        self.tia_ward_time_dist.sample_within_bounds(
+                            minimum=60 * 24 * 0.5
                         )
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 2)
-                        patient.mrs_discharge = (
-                            patient.mrs_type
-                            - self.mrs_reduction_during_stay_thrombolysed.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los_thrombolysis = (
-                            sampled_ward_act_time_thrombolysis
-                        )
-                        yield self.env.timeout(sampled_ward_act_time_thrombolysis)
-                        if (
-                            self.env.now > g.warm_up_period
-                            and patient.thrombolysis_enabled_by_ctp == True
-                        ):
-                            if g.short_term_thrombolysis_savings:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = (
-                                    (
-                                        (
-                                            sampled_ward_act_time
-                                            - sampled_ward_act_time_thrombolysis
-                                        )
-                                        / 60
-                                    )
-                                    / 24
-                                ) * g.inpatient_bed_cost_thrombolysis
-                            else:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = g.fixed_thrombolysis_saving_amount_long_term
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
-                    else:
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                        patient.mrs_discharge = (
-                            patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        patient.ward_los = sampled_ward_act_time
-                        yield self.env.timeout(sampled_ward_act_time)
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
-
-                elif patient.patient_diagnosis == 1 and patient.mrs_type == 5:
-                    sampled_ward_act_time = (
-                        self.i_ward_time_mrs_5_dist.sample_within_bounds(minimum=1)
-                    )
-                    if patient.thrombolysis == True:
-                        sampled_ward_act_time_thrombolysis = (
-                            sampled_ward_act_time * g.thrombolysis_los_save
-                        )
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 2)
-                        patient.mrs_discharge = (
-                            patient.mrs_type
-                            - self.mrs_reduction_during_stay_thrombolysed.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"💉 Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) THROMBOLYSED. Will be in ward for {sampled_ward_act_time_thrombolysis:.1f} minutes ({(sampled_ward_act_time_thrombolysis / 24 / 60):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        # Record generated LOS in patient object
-                        patient.ward_los_thrombolysis = (
-                            sampled_ward_act_time_thrombolysis
-                        )
-                        yield self.env.timeout(sampled_ward_act_time_thrombolysis)
-                        if (
-                            self.env.now > g.warm_up_period
-                            and patient.thrombolysis_enabled_by_ctp == True
-                        ):
-                            if g.short_term_thrombolysis_savings:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = (
-                                    (
-                                        (
-                                            sampled_ward_act_time
-                                            - sampled_ward_act_time_thrombolysis
-                                        )
-                                        / 60
-                                    )
-                                    / 24
-                                ) * g.inpatient_bed_cost_thrombolysis
-                            else:
-                                self.results_df.at[
-                                    patient.id, "Thrombolysis Savings"
-                                ] = g.fixed_thrombolysis_saving_amount_long_term
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
-                    else:
-                        # patient.mrs_discharge = patient.mrs_type - random.randint(0, 1)
-                        patient.mrs_discharge = (
-                            patient.mrs_type - self.mrs_reduction_during_stay.sample()
-                        )
-                        trace(
-                            time=self.env.now,
-                            debug=g.show_trace,
-                            msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
-                            identifier=patient.id,
-                            config=g.trace_config,
-                        )
-                        # Record generated LOS in patient object
-                        patient.ward_los = sampled_ward_act_time
-                        yield self.env.timeout(sampled_ward_act_time)
-                        patient.ward_discharge_time = self.env.now
-                        self.ward_occupancy.remove(patient)
-
-                #################################
-                # MARK: Patient diagnosis = 2   #
-                # Transient Ischaemic Attack    #
-                # Not suitable for thrombolysis #
-                #################################
-                # The below code is for the non stroke diagnosis.
-
-                if patient.patient_diagnosis == 2:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_tia_ward_time
-                    # )
-                    sampled_ward_act_time = (
-                        self.tia_ward_time_dist.sample_within_bounds(minimum=1)
                     )
                     trace(
                         time=self.env.now,
                         debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
+                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis_type}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
                         identifier=patient.id,
                         config=g.trace_config,
                     )
-                    # Record generated LOS in patient object
                     patient.ward_los = sampled_ward_act_time
                     yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
 
-                ###############################
-                # MARK: Patient diagnosis > 2 #
-                # Stroke mimic OR non-stroke  #
-                ###############################
-                if patient.patient_diagnosis > 2:
-                    # sampled_ward_act_time = random.expovariate(
-                    #     1.0 / g.mean_n_non_stroke_ward_time
-                    # )
+                else:  # diag > 2 — stroke mimic / non-stroke
                     sampled_ward_act_time = (
-                        self.non_stroke_ward_time_dist.sample_within_bounds(minimum=1)
+                        self.non_stroke_ward_time_dist.sample_within_bounds(
+                            minimum=60 * 24 * 0.5
+                        )
                     )
-
                     trace(
                         time=self.env.now,
                         debug=g.show_trace,
-                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
+                        msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis_type}), MRS type {patient.mrs_type}) will be in ward for {sampled_ward_act_time:.1f} minutes ({(sampled_ward_act_time / 60 / 24):.1f} days).",
                         identifier=patient.id,
                         config=g.trace_config,
                     )
-
-                    # Record generated LOS in patient object
                     patient.ward_los = sampled_ward_act_time
                     yield self.env.timeout(sampled_ward_act_time)
-                    patient.ward_discharge_time = self.env.now
-                    self.ward_occupancy.remove(patient)
 
-            # Relevent information is recorded in the results DataFrame.
-            if self.env.now > g.warm_up_period:
-                self.results_df.at[patient.id, "Q Time Ward"] = patient.q_time_ward
+                patient.ward_discharge_time = self.env.now
+                self.ward_occupancy.remove(patient)
 
-            # TODO: SR: I've tweaked this to take whichever of the ward_los or thrombolysis los is generated
-            # TODO SR: It would be better to take a more robust approach to this step.
-            try:
-                final_ward_los = sampled_ward_act_time
-            except:
-                final_ward_los = sampled_ward_act_time_thrombolysis
+                # Relevent information is recorded in the results DataFrame.
+                if self.env.now > g.warm_up_period:
+                    self.results_df.at[patient.id, "Q Time Ward"] = patient.q_time_ward
 
-            if self.env.now > g.warm_up_period:
-                self.results_df.at[patient.id, "Ward LOS"] = final_ward_los
+                # TODO: SR: I've tweaked this to take whichever of the ward_los or thrombolysis los is generated
+                # TODO SR: It would be better to take a more robust approach to this step.
+                try:
+                    final_ward_los = sampled_ward_act_time
+                except:
+                    final_ward_los = sampled_ward_act_time_thrombolysis
 
-                self.results_df.at[patient.id, "MRS DC"] = patient.mrs_discharge
+                if self.env.now > g.warm_up_period:
+                    self.results_df.at[patient.id, "Ward LOS"] = final_ward_los
 
-                self.results_df.at[patient.id, "MRS Change"] = (
-                    patient.mrs_type - patient.mrs_discharge
+                    self.results_df.at[patient.id, "MRS DC"] = patient.mrs_discharge
+
+                    self.results_df.at[patient.id, "MRS Change"] = (
+                        patient.mrs_type - patient.mrs_discharge
+                    )
+
+                # MARK: Discharged from main ward
+                trace(
+                    time=self.env.now,
+                    debug=g.show_trace,
+                    msg=f"🚗 Patient {patient.id} discharged from main ward at {minutes_to_ampm(int(self.env.now % 1440))} after {final_ward_los:.1f} minutes ({(final_ward_los / 24 / 60):.1f} days). Occupancy after discharge: {len(self.ward_occupancy)} of {g.number_of_ward_beds} ward beds",
+                    identifier=patient.id,
+                    config=g.trace_config,
                 )
 
-            # MARK: Discharged from main ward
-            trace(
-                time=self.env.now,
-                debug=g.show_trace,
-                msg=f"🚗 Patient {patient.id} discharged from main ward at {minutes_to_ampm(int(self.env.now % 1440))} after {final_ward_los:.1f} minutes ({(final_ward_los / 24 / 60):.1f} days). Occupancy after discharge: {len(self.ward_occupancy)} of {g.number_of_ward_beds} ward beds",
-                identifier=patient.id,
-                config=g.trace_config,
-            )
-
-            patient.exit_time = self.env.now
-            patient.journey_completed = True
+                patient.exit_time = self.env.now
+                patient.journey_completed = True
 
         # Record patients who exited at any remaining points
         patient.exit_time = self.env.now

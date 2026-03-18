@@ -70,8 +70,47 @@ considered carefully.
 # Tab 3: Model information
 with tab_model:
     st.header("Where can I find technical details about the model?")
-    st.write("Coming Soon!")
+    st.markdown(
+        "Additional details can be found on the documentation site: [http://sammirosser.com/jw_hsma_des_stroke_project/](http://sammirosser.com/jw_hsma_des_stroke_project/)"
+    )
     # TODO: Link to the documentation and STRESS guidance within documentation
+
+    st.header("What assumptions and simplifications have been made in the model?")
+
+    st.markdown("### Assumptions")
+    st.write("""
+- If demand increases, it will increase equally across all patient types (ischaemic stroke,
+intracerebral haemhorrhage, transient ischaemic attack, stroke mimics, non-stroke).
+- Stroke type (I/ICH/TIA/mimic/non) and severity (MRS score) does not vary with time of day.
+- Stroke demand does not exhibit weekly or yearly seasonality (i.e. incidence does not change across
+the days of the week or the months of the year).
+- By default, each SDEC admission avoidance is assumed to avoid a LOS of 1.5 days, though this
+is a parameter which can be adjusted in the web app
+- By default, thrombolysis is assumed to reduce a patient's stay to 75% of what it would have been.
+This parameter can be adjusted in the model code, but is not settable via the web app.
+- Patients admitted to a ward are assumed to have a minimum stay of 0.5 days
+""")
+
+    st.markdown("### Simplifications")
+    st.write("""
+- Patients will queue indefinitely for a stroke bed in the stroke ward (and their expected LoS will
+not count down during this time).
+- Thrombectomy (mechanical clot removal) is not offered.
+- All patients meeting the criteria for admission avoidance will avoid admission (i.e. no contraindications are modelled).
+- The severity of strokes (in terms of MRS on admission) does not vary by the type of stroke.
+- While the onset type of strokes can vary across the course of the day, this cannot be set
+independently of the times considered to be in-hours and out-of-hours demand (i.e. they are
+effectively linked in the model).
+- Patients can be discharged at any time of day.
+- If the SDEC is full when a patient requires it, they will move straight to queueing or getting
+a bed in the main ward (as opposed to entering the SDEC if space becomes available shortly after
+they first attempt to enter it).
+- If the stroke ward is full and there are patients either waiting to move from the SDEC to the main
+ward or queuing directly for entry to the main ward, patients will be allocated a bed in the main
+ward in the order they first requested a bed in the main ward. Patients in the SDEC will request
+a bed in the main ward once their sampled time in the SDEC ward has elapsed, but will continue to
+occupy an SDEC bed in the meantime until a space is available and they are at the front of the queue.
+                          """)
 
     st.header("Can I adapt and use the model with my own trust?")
     st.write("Coming Soon!")

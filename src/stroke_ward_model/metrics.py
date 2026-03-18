@@ -72,6 +72,22 @@ year{"" if self.sim_duration_days // 365 == 1 else "s"} and
         self.duration_hours_sdec = ((24 * 60) - g.sdec_unav_time) / 60
         self.end_hour_sdec = (self.start_hour_sdec + self.duration_hours_sdec) % 24
 
+        # Additional attributes for reporting
+        self.number_of_ward_beds = g.number_of_ward_beds
+        self.sdec_beds = g.sdec_beds
+
+        self.therapy_sdec = int(g.therapy_sdec)
+        self.thrombolysis_los_save = g.thrombolysis_los_save
+
+        self.sdec_dr_cost_min = g.sdec_dr_cost_min
+        self.sdec_bed_day_saving = g.sdec_bed_day_saving
+        self.inpatient_bed_cost = g.inpatient_bed_cost
+        self.short_term_thrombolysis_savings = int(g.short_term_thrombolysis_savings)
+        self.inpatient_bed_cost_thrombolysis = g.inpatient_bed_cost_thrombolysis
+        self.fixed_thrombolysis_saving_amount_long_term = (
+            g.fixed_thrombolysis_saving_amount_long_term
+        )
+
         # Patients per run
         self.average_patients_per_run = self.patient_df.groupby("run").size().mean()
         self.min_patients_per_run = self.patient_df.groupby("run").size().min()
@@ -156,21 +172,51 @@ year{"" if self.sim_duration_days // 365 == 1 else "s"} and
         )
 
         # Number of patients who can avoid a full admission due to SDEC operating
-        self.avoid_yearly = (
-            self.df_trial_results["Number of Admissions Avoided In Run"]
-            / self.sim_duration_years
-        ).mean()
+        self.avoid_yearly = self.scale_to_year(
+            (self.df_trial_results["Number of Admissions Avoided In Run"]).mean()
+        )
 
         # Add range seen across different sim runs
-        self.avoid_yearly_min = (
-            self.df_trial_results["Number of Admissions Avoided In Run"]
-            / self.sim_duration_years
-        ).min()
+        self.avoid_yearly_min = self.scale_to_year(
+            (self.df_trial_results["Number of Admissions Avoided In Run"]).min()
+        )
 
-        self.avoid_yearly_max = (
-            self.df_trial_results["Number of Admissions Avoided In Run"]
-            / self.sim_duration_years
-        ).max()
+        self.avoid_yearly_max = self.scale_to_year(
+            (self.df_trial_results["Number of Admissions Avoided In Run"]).max()
+        )
+
+        # Ischaemic stroke admissions avoided
+        self.avoid_yearly_ischaemic = self.scale_to_year(
+            self.patient_df[
+                (self.patient_df["patient_diagnosis_type"].isin(["I"]))
+                & (self.patient_df["admission_avoidance"] == True)
+            ]
+            .groupby("run")
+            .size()
+            .mean()
+        )
+
+        # ICH stroke admissions avoided
+        self.avoid_yearly_ich = self.scale_to_year(
+            self.patient_df[
+                (self.patient_df["patient_diagnosis_type"].isin(["ICH"]))
+                & (self.patient_df["admission_avoidance"] == True)
+            ]
+            .groupby("run")
+            .size()
+            .mean()
+        )
+
+        # Admissions avoided through therapy provision
+        self.avoid_yearly_therapy = self.scale_to_year(
+            self.patient_df[
+                (self.patient_df["admission_avoidance"] == True)
+                & (self.patient_df["admission_avoidance_because_of_therapy"] == True)
+            ]
+            .groupby("run")
+            .size()
+            .mean()
+        )
 
         # Number of patients with a delayed admission to a stroke ward per year
         self.admit_delay_yearly = (

@@ -322,7 +322,7 @@ out-of-hours?
         "How many days on a hyperacute stroke ward is an admission avoided through SDEC assumed to save?",
         min_value=0.1,
         max_value=10.0,
-        value=2.0,
+        value=1.5,
     )
 
     g.sdec_bed_day_saving = sdec_day_savings
@@ -796,16 +796,25 @@ individual hospitals will not incur increased costs from appropriate use of thro
                             border=True,
                         )
 
-                        st.caption(
-                            f"""
-    Avoided admissions are those patients who were able to leave after being seen
-    in SDEC, and would have had a full admission if the SDEC was not available.
-    Range = {metrics.avoid_yearly_min:.0f} to {metrics.avoid_yearly_max:.0f} per year across runs.
-    The average total number of admissions avoided for the full model period
-    of {metrics.sim_duration_display} were
-    {metrics.df_trial_results["Number of Admissions Avoided In Run"].mean():,.0f}.
+                    avoided_admissions_caption = f"""
+Avoided admissions are those patients who were able to leave after being seen
+in SDEC, and would have had a full admission if the SDEC was not available.
+Range = {metrics.avoid_yearly_min:.0f} to {metrics.avoid_yearly_max:.0f} per year across runs.
+The average total number of admissions avoided for the full model period
+of {metrics.sim_duration_display} were
+{metrics.df_trial_results["Number of Admissions Avoided In Run"].mean():,.0f}.
+
+Of the avoided admissions, on average {metrics.avoid_yearly_ich:,.0f} were ICH and {metrics.avoid_yearly_ischaemic:,.0f}
+were ischaemic strokes.
                             """
-                        )
+
+                    if g.therapy_sdec:
+                        avoided_admissions_caption += f"""
+Of all the avoided admissions, an average of {metrics.avoid_yearly_therapy:,.0f} were enabled by the provision
+of therapy in the SDEC.
+"""
+
+                    st.caption(avoided_admissions_caption)
 
                 # Add container with mean ward occupancy
                 with col3b:
