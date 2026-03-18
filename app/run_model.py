@@ -322,7 +322,7 @@ out-of-hours?
         "How many days on a hyperacute stroke ward is an admission avoided through SDEC assumed to save?",
         min_value=0.1,
         max_value=10.0,
-        value=2.0,
+        value=1.5,
     )
 
     g.sdec_bed_day_saving = sdec_day_savings
