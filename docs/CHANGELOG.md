@@ -13,6 +13,23 @@ Additional comments and docstrings have also been added for readability, and the
 However, changes for aesthetic reasons, or where the change would reduce the readability/understandability
 of the code for contributors with less experience in coding, have been avoided.
 
+## Summary of key changes to model logic
+
+- Thrombolysis rate was too high as all patients meeting onset time criteria (or eligible if CTP scanned) would then be thrombolysed. Added a contraindication chance parameter to reflect common contraindications like mild stroke symptoms and/or symptoms that are already improving, previous stroke within a certain  time period, severe uncontrolled hypertension, dementia, pregnancy, recently taken certain oral anticoagulants, previous use of thrombolysis for other conditions within a given time period, arriving later in thrombolysable window.
+- Interarrival times for day and night were updated to reflect updated data
+- Model time 0 reconceptualised as midnight on first day, with SDEC opening hours, CTP opening hours and in-hour/out-of-hour patient arrival generator times all now able to be set independently of each other
+- Updated assumptions of % of patients falling into each onset time category (in thrombolysable window - only ct scan required, outside standard thrombolysable window or unknown onset but thrombolysable if ctp scan, not thrombolysable) from 33/33/33 to a split reflective of literature. Also allowed these probabilities to be set independently for in hour and out of hour arrivals to reflect change in number of patients with an unknown onset in out-of-hours.
+- Updated counting of thrombolysis savings to ensure that patients were not counted as benefitting from the CTP scanner purely because they had a CTP scan and were then thrombolysed; this incorrectly attributed a benefit of CTP scanning to the patients who would have been thrombolysed even if only a CT scanner had been available (due to known onset).
+- Adjusted patient pathways to ensure TIA, stroke mimic and non-stroke patients won't risk bypassing the SDEC if they are not
+- Switched from two separate arrival generators for day and night to a single generator using a modified version of the NSPP Thinning distribution from sim-tools, avoiding arrivals exhibiting significant peaks at changeover times between the two generators (which was exacerbated by a bug that led to individuals often being generated at the exact changeover times).
+- Adjusted the logic for SDEC admission avoidance eligibility for ICH patients to reflect the lower % of ICH patients avoiding admission compared to ischaemic stroke patients. This is due to the higher clinical risk of ICH patients being discharged that may lead to clinician reluctance or more stringent requirements, which also are not captured well by MRS on arrival, unlike for ischaemic strokes.
+- Updated LOS distributions to reflect updated data.
+- Adjusted queueing approach for patients moving from SDEC to ward to ensure they do not wait indefinitely in a scenario where the ward is running at full capacity and there is also a queue of patients waiting for direct admission to the ward, which led to a situation where the SDEC patients would never move out of the SDEC as the direct admissions would always being prioritised, blocking SDEC completely as those patients journies would effectively become stuck.
+- Adjusted capacity checks for SDEC to ensure capacity was as intended, not 1 bed higher
+- Adjusted resource allocation logic for SDEC to ensure patients couldn't be admitted to it during closed hours due to the way the obstruction logic was handled
+- Switched distributions to use sim-tools and numpy's seed sequence, allowing for fully reproducible outputs and tests
+- Allowed assumption of 1 day bed day saving per avoided admission to be varied
+
 ## New features
 
 ### Web App
@@ -45,7 +62,7 @@ of the code for contributors with less experience in coding, have been avoided.
     - Added ward and SDEC occupancy plots
         - Added warm-up duration line to ward plot to allow visual assessment of whether warm-up period is appropriate
     - Added debugging plot for all patient attributes
-    - Added about page with process diagram and placeholders for pathway and model FAQs.
+    - Added about page with process diagram and placeholders for pathway and model FAQs, including list of assumptions and simplifications in the model
     - Added ability to compare previously run scenarios in app interface against a selectable 'baseline' run
     - Added ability to save and load previous runs into app for easy access in the scenario comparison tab
 
