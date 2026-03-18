@@ -134,6 +134,7 @@ of the code for contributors with less experience in coding, have been avoided.
         - Patient diagnosis type
         - Admission avoidance flag
         - Thrombolysis
+- Refine admission avoidance criteria to better reflect real-world patterns; reduce the number of ICH patients eligible for admission avoidance
 
 ### Reproducibility
 
@@ -165,6 +166,7 @@ of the code for contributors with less experience in coding, have been avoided.
 ### Patient Pathways
 
 - Adjust admission avoidance code to ensure that non-stroke/TIA/stroke mimics patients never incorrectly jump from CT/CTP scan to discharge when the SDEC is open, and will always spend time in the SDEC at least
+- Adjust prioritisation of patients in the situation where the ward is full, ensuring SDEC patients will eventually move out of the SDEC (whereas previously patients waiting directly for a ward bed would always be prioritised, meaning that patients waiting to move from SDEC to ward could never progress their journey)
 
 ### Thrombolysis
 
@@ -195,6 +197,7 @@ of the code for contributors with less experience in coding, have been avoided.
 - Added a separate requirements.txt file for web app
     - This removes the requirements that are not required for the web app, such as mkdocs and pytest
     - This will be picked up by Streamlit community cloud, and shortens the load time for container reloads
+- Refactored ward admission code to reduce the number of conditional blocks required for ward stays
 
 # v0.1.0
 

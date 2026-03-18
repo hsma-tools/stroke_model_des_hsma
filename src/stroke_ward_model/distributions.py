@@ -352,3 +352,5 @@ def initialise_distributions(self):
     self.thrombolysis_contraindication_chance = Uniform(
         low=0, high=1, random_seed=seeds[32]
     )
+
+    self.ich_same_day_discharge_chance = Uniform(low=0, high=1, random_seed=seeds[33])

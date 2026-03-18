@@ -661,7 +661,9 @@ class Model:
             # a Log normal one (though the intense variation in the real life
             # consult time might mean a exponetial distribution is better)
             # sampled_nurse_act_time = random.expovariate(1.0 / g.mean_n_consult_time)
-            sampled_nurse_act_time = self.nurse_consult_time_dist.sample()
+            sampled_nurse_act_time = self.nurse_consult_time_dist.sample_within_bounds(
+                minimum=5
+            )
 
             # Freeze this function in place for the activity time we sampled
             # above.  This is the patient spending time with the nurse.
@@ -704,7 +706,7 @@ class Model:
             # be updated to a log normal distribution
 
             # sampled_ctp_act_time = random.expovariate(1.0 / g.mean_n_ct_time)
-            sampled_ctp_act_time = self.ct_time_dist.sample()
+            sampled_ctp_act_time = self.ct_time_dist.sample_within_bounds(minimum=15)
             patient.ctp_duration = sampled_ctp_act_time
             # Freeze this function in place for the activity time that was
             # sampled above.
@@ -743,7 +745,7 @@ class Model:
             patient.ct_scan_start_time = self.env.now
 
             # sampled_ct_act_time = random.expovariate(1.0 / g.mean_n_ct_time)
-            sampled_ct_act_time = self.ct_time_dist.sample()
+            sampled_ct_act_time = self.ct_time_dist.sample_within_bounds(minimum=15)
             patient.ct_duration = sampled_ct_act_time
 
             yield self.env.timeout(sampled_ct_act_time)
@@ -859,178 +861,182 @@ class Model:
             # animating it correctly. However, we still need to hold it for the
             # duration of this code block so that someone else doesn't end up
             # in the same bed!
-            with self.sdec_bed.request() as req:
-                sdec_bed_used = yield req
-                patient.sdec_bed_id = sdec_bed_used.id_attribute
+            sdec_bed_used = yield self.sdec_bed.get_direct()
+            patient.sdec_bed_id = sdec_bed_used.id_attribute
 
-                patient.sdec_admit_time = self.env.now
+            patient.sdec_admit_time = self.env.now
 
-                trace(
-                    time=self.env.now,
-                    debug=g.show_trace,
-                    msg=f"🛏️🏎️ Patient {patient.id} admitted to SDEC (occupancy before admission: {len(self.sdec_occupancy)} of {g.sdec_beds} SDEC beds) at {minutes_to_ampm(int(self.env.now % 1440))}.",
-                    identifier=patient.id,
-                    config=g.trace_config,
+            trace(
+                time=self.env.now,
+                debug=g.show_trace,
+                msg=f"🛏️🏎️ Patient {patient.id} admitted to SDEC (occupancy before admission: {len(self.sdec_occupancy)} of {g.sdec_beds} SDEC beds) at {minutes_to_ampm(int(self.env.now % 1440))}.",
+                identifier=patient.id,
+                config=g.trace_config,
+            )
+
+            self.sdec_occupancy.append(patient)
+
+            # The below code record the SDEC Occupancy as the patient passes
+            # this point to ensure it is working as expected.
+
+            if self.env.now > g.warm_up_period:
+                self.results_df.at[patient.id, "SDEC Occupancy"] = len(
+                    self.sdec_occupancy
                 )
 
-                self.sdec_occupancy.append(patient)
+                self.sdec_occupancy_graph_df.loc[len(self.sdec_occupancy_graph_df)] = [
+                    self.env.now,
+                    len(self.sdec_occupancy),
+                    False,
+                ]
+            else:
+                self.sdec_occupancy_graph_df.loc[len(self.sdec_occupancy_graph_df)] = [
+                    self.env.now,
+                    len(self.sdec_occupancy),
+                    True,
+                ]
 
-                # The below code record the SDEC Occupancy as the patient passes
-                # this point to ensure it is working as expected.
+            patient.sdec_pathway = True
 
-                if self.env.now > g.warm_up_period:
-                    self.results_df.at[patient.id, "SDEC Occupancy"] = len(
-                        self.sdec_occupancy
-                    )
-
-                    self.sdec_occupancy_graph_df.loc[
-                        len(self.sdec_occupancy_graph_df)
-                    ] = [
-                        self.env.now,
-                        len(self.sdec_occupancy),
-                        False,
-                    ]
-                else:
-                    self.sdec_occupancy_graph_df.loc[
-                        len(self.sdec_occupancy_graph_df)
-                    ] = [
-                        self.env.now,
-                        len(self.sdec_occupancy),
-                        True,
-                    ]
-
-                patient.sdec_pathway = True
-
-                ###########################################################
-                # ADMISSION AVOIDANCE
-                # This code checks if the patient is eligible for admission
-                # avoidance depending on if therapy support is enabled.
-                ###########################################################
-                if g.therapy_sdec == False:
-                    if (
-                        # patient.patient_diagnosis < 2 # SR: CHANGED THIS 17/3 PENDING CONFIRMATION
-                        patient.patient_diagnosis == 1
-                        and patient.mrs_type < 2
-                        and patient.thrombolysis == False
-                    ):
+            ###########################################################
+            # ADMISSION AVOIDANCE
+            # This code checks if the patient is eligible for admission
+            # avoidance depending on if therapy support is enabled.
+            ###########################################################
+            if g.therapy_sdec == False:
+                if (
+                    # SR: CHANGED THIS from <2 on 17/3 - see below
+                    patient.patient_diagnosis == 1
+                    and patient.mrs_type < 2
+                    and patient.thrombolysis == False
+                ):
+                    patient.admission_avoidance = True
+                    patient.admission_avoidance_because_of_therapy = False
+                # SR 17/3/26 I've added this after talking to JW about historical patterns
+                # as ICH patients are technically eligible for same day discharge and it
+                # does happen, but it's rarer than for ischaemic stroke
+                # Have slightly elevated it above the reported rate as known figure is based on
+                # those who could be discharged because SDEC operating, so presumably the raw
+                # figure eligible is slightly higher
+                elif patient.patient_diagnosis == 0:
+                    if self.ich_same_day_discharge_chance.sample() <= 0.2:
                         patient.admission_avoidance = True
                         patient.admission_avoidance_because_of_therapy = False
 
-                elif g.therapy_sdec == True:
-                    if (
-                        # patient.patient_diagnosis < 2 # SR: CHANGED THIS 17/3 PENDING CONFIRMATION
-                        patient.patient_diagnosis == 1
-                        and patient.mrs_type <= 3
-                        and patient.thrombolysis == False
-                    ):
+            elif g.therapy_sdec == True:
+                if (
+                    # SR: CHANGED THIS from <2 on 17/3 - see below
+                    patient.patient_diagnosis == 1
+                    and patient.mrs_type <= 3
+                    and patient.thrombolysis == False
+                ):
+                    patient.admission_avoidance = True
+
+                    if patient.mrs_type > 1:
+                        patient.admission_avoidance_because_of_therapy = True
+                    else:
+                        patient.admission_avoidance_because_of_therapy = False
+
+                # SR 17/3/26 I've added this after talking to JW about historical patterns
+                # as ICH patients are technically eligible for same day discharge and it
+                # does happen, but it's rarer than for ischaemic stroke
+                # Have slightly elevated it above the reported rate as known figure is based on
+                # those who could be discharged because SDEC operating, so presumably the raw
+                # figure eligible is slightly higher
+                elif patient.patient_diagnosis == 0:
+                    if self.ich_same_day_discharge_chance.sample() <= 0.2:
                         patient.admission_avoidance = True
+                        patient.admission_avoidance_because_of_therapy = False
+            else:
+                patient.admission_avoidance = False
+                patient.admission_avoidance_because_of_therapy = False
 
-                        if patient.mrs_type > 1:
-                            patient.admission_avoidance_because_of_therapy = True
-                        else:
-                            patient.admission_avoidance_because_of_therapy = False
-                else:
-                    patient.admission_avoidance = False
-                    patient.admission_avoidance_because_of_therapy = False
+            ##########################################################
+            # Non-admission - non-stroke, TIA and stroke mimic       #
+            ##########################################################
+            # For patients who have TIA, non-stroke or stroke mimic,
+            # they have a high chance of avoiding admission, but this
+            # is not counted in the same way
 
-                ##########################################################
-                # Non-admission - non-stroke, TIA and stroke mimic       #
-                ##########################################################
-                # For patients who have TIA, non-stroke or stroke mimic,
-                # they have a high chance of avoiding admission, but this
-                # is not counted in the same way
+            if (
+                patient.non_admission >= self.tia_admission_chance
+                and patient.patient_diagnosis == 2
+            ):
+                patient.admission_avoidance = False
+                patient.admission_avoidance_because_of_therapy = False
+                patient.non_admitted_tia_ns_sm = True
 
-                if (
-                    patient.non_admission >= self.tia_admission_chance
-                    and patient.patient_diagnosis == 2
-                ):
-                    patient.admission_avoidance = False
-                    patient.admission_avoidance_because_of_therapy = False
-                    patient.non_admitted_tia_ns_sm = True
-
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"↩️ TIA Patient {patient.id} avoided admission.",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-
-                elif (
-                    patient.non_admission >= self.stroke_mimic_admission_chance
-                    and patient.patient_diagnosis > 2
-                ):
-                    patient.admission_avoidance = False
-                    patient.admission_avoidance_because_of_therapy = False
-                    patient.non_admitted_tia_ns_sm = True
-                    trace(
-                        time=self.env.now,
-                        debug=g.show_trace,
-                        msg=f"↩️ Stroke mimic or non-stroke Patient {patient.id} (diagnosis {patient.diagnosis}) avoided admission.",
-                        identifier=patient.id,
-                        config=g.trace_config,
-                    )
-                else:
-                    patient.non_admitted_tia_ns_sm = False
-
-                # Calculate SDEC stay time from exponential
-                # sampled_sdec_stay_time = random.expovariate(1.0 / g.mean_n_sdec_time)
-                sampled_sdec_stay_time = self.sdec_time_dist.sample()
-
-                # Add patient SDEC LOS to their patient object
-                patient.sdec_los = sampled_sdec_stay_time
-
-                # Freeze this function in place for the activity time we sampled
-                # above.
                 trace(
                     time=self.env.now,
                     debug=g.show_trace,
-                    msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in SDEC for {sampled_sdec_stay_time:.1f} minutes ({(sampled_sdec_stay_time / 60 / 24):.1f} days).",
+                    msg=f"↩️ TIA Patient {patient.id} avoided admission.",
                     identifier=patient.id,
                     config=g.trace_config,
                 )
 
-                yield self.env.timeout(sampled_sdec_stay_time)
-
-                # This code checks if the ward is full, if this is the case the
-                # patient will not be released from the SDEC, thus impeding it use
-
-                if (
-                    not patient.admission_avoidance
-                    and not patient.non_admitted_tia_ns_sm
-                ):
-                    while len(self.ward_occupancy) >= g.number_of_ward_beds:
-                        yield self.env.timeout(1)
-
-                # Once the above code is complete the patient is removed from the
-                # SDEC occupancy list.
-
-                self.sdec_occupancy.remove(patient)
-                patient.sdec_discharge_time = self.env.now
-
-                # Code to record the SDEC stay time in the results DataFrame.
-                if self.env.now > g.warm_up_period:
-                    self.results_df.at[patient.id, "Time in SDEC"] = (
-                        sampled_sdec_stay_time
-                    )
-
-                # MARK: Discharged from SDEC
+            elif (
+                patient.non_admission >= self.stroke_mimic_admission_chance
+                and patient.patient_diagnosis > 2
+            ):
+                patient.admission_avoidance = False
+                patient.admission_avoidance_because_of_therapy = False
+                patient.non_admitted_tia_ns_sm = True
                 trace(
                     time=self.env.now,
                     debug=g.show_trace,
-                    msg=f"🏎️ Patient {patient.id} discharged from SDEC at {minutes_to_ampm(int(self.env.now % 1440))} after {patient.sdec_los:.1f} minutes ({(patient.sdec_los / 60 / 24):.1f} days). Occupancy after discharge: {len(self.sdec_occupancy)} of {g.sdec_beds} SDEC beds",
+                    msg=f"↩️ Stroke mimic or non-stroke Patient {patient.id} (diagnosis {patient.diagnosis}) avoided admission.",
                     identifier=patient.id,
                     config=g.trace_config,
                 )
+            else:
+                patient.non_admitted_tia_ns_sm = False
+
+            # Calculate SDEC stay time from exponential
+            # sampled_sdec_stay_time = random.expovariate(1.0 / g.mean_n_sdec_time)
+            sampled_sdec_stay_time = self.sdec_time_dist.sample_within_bounds(
+                minimum=60
+            )
+
+            # Add patient SDEC LOS to their patient object
+            patient.sdec_los = sampled_sdec_stay_time
+
+            # Freeze this function in place for the activity time we sampled
+            # above.
+            trace(
+                time=self.env.now,
+                debug=g.show_trace,
+                msg=f"Patient {patient.id} (diagnosis {patient.diagnosis} ({patient.patient_diagnosis}), MRS type {patient.mrs_type}) will be in SDEC for {sampled_sdec_stay_time:.1f} minutes ({(sampled_sdec_stay_time / 60 / 24):.1f} days).",
+                identifier=patient.id,
+                config=g.trace_config,
+            )
+
+            yield self.env.timeout(sampled_sdec_stay_time)
+
+            # Code to record the SDEC stay time in the results DataFrame.
+            if self.env.now > g.warm_up_period:
+                self.results_df.at[patient.id, "Time in SDEC"] = sampled_sdec_stay_time
+
+            # MARK: Discharged from SDEC
+            trace(
+                time=self.env.now,
+                debug=g.show_trace,
+                msg=f"🏎️ Patient {patient.id} discharged from SDEC at {minutes_to_ampm(int(self.env.now % 1440))} after {patient.sdec_los:.1f} minutes ({(patient.sdec_los / 60 / 24):.1f} days). Occupancy after discharge: {len(self.sdec_occupancy)} of {g.sdec_beds} SDEC beds",
+                identifier=patient.id,
+                config=g.trace_config,
+            )
 
             ##########################################
             # MARK: Admission Avoidance cost savings
             ##########################################
             # This code add information regarding the patients admission avoidance.
 
-            if patient.admission_avoidance == True and patient.patient_diagnosis < 2:
+            if patient.admission_avoidance == True:
                 # Regardless of whether the warm-up has passed, recording in
                 # patient object that this patient's journey was completed
+                self.sdec_occupancy.remove(patient)
+                self.sdec_bed.put(sdec_bed_used)
+
+                patient.sdec_discharge_time = self.env.now
                 patient.exit_time = self.env.now
                 patient.journey_completed = True
 
@@ -1048,12 +1054,17 @@ class Model:
                         g.inpatient_bed_cost * g.sdec_bed_day_saving
                     )
 
+            # Make sure we also record an exit time for the non-stroke/tia/stroke mimic patients
+            # who are exiting after they've been seen in the SDEC
             # This code exists after the admission avoidance code so they
             # are not added to the admission avoidance list, as that should
             # only be for SDEC patients who avoid admission.
             # This code ensures that these patients get an exit time
 
             if patient.non_admitted_tia_ns_sm == True:
+                self.sdec_occupancy.remove(patient)
+                self.sdec_bed.put(sdec_bed_used)
+                patient.sdec_discharge_time = self.env.now
                 patient.exit_time = self.env.now
                 patient.journey_completed = True
 
@@ -1125,19 +1136,33 @@ class Model:
             # These code assigns a time to the start q variable. In stroke care
             # delays can have serious consequence so modeling this is very
             # important as flow disruption are a common issue.
-
-            start_q_ward = self.env.now
-            patient.ward_q_start_time = self.env.now
+            if not patient.sdec_pathway:
+                start_q_ward = self.env.now
+                patient.ward_q_start_time = self.env.now
 
             # Request the ward bed and hold the patient in a queue until this
             # is met.
 
             with self.ward_bed.request() as req:
                 ward_bed_used = yield req
+                # They've now obtained a ward bed so we can remove them from the SDEC
+                patient.ward_admit_time = self.env.now
+                # The patient attribute for the queuing time in the ward is
+                # assigned here.
+                if not patient.sdec_pathway:
+                    end_q_ward = self.env.now
+                    patient.q_time_ward = end_q_ward - start_q_ward
+
+                elif patient.sdec_pathway:
+                    self.sdec_occupancy.remove(patient)
+                    self.sdec_bed.put(sdec_bed_used)
+                    patient.sdec_discharge_time = self.env.now
+
                 patient.ward_bed_id = ward_bed_used.id_attribute
                 # Add patient to the ward list
 
                 self.ward_occupancy.append(patient)
+
                 trace(
                     time=self.env.now,
                     debug=g.show_trace,
@@ -1145,8 +1170,6 @@ class Model:
                     identifier=patient.id,
                     config=g.trace_config,
                 )
-
-                patient.ward_admit_time = self.env.now
 
                 if self.env.now > g.warm_up_period:
                     self.results_df.at[patient.id, "Ward Occupancy"] = len(
@@ -1170,18 +1193,11 @@ class Model:
                         True,
                     ]
 
-                # The patient attribute for the queuing time in the ward is
-                # assigned here.
-
-                end_q_ward = self.env.now
-
-                patient.q_time_ward = end_q_ward - start_q_ward
-
                 if patient.patient_diagnosis_type in ["ICH", "I"]:
                     sampled_ward_act_time = getattr(
                         self,
                         f"{patient.patient_diagnosis_type.lower()}_ward_time_mrs_{patient.mrs_type}_dist",
-                    ).sample_within_bounds(minimum=1)
+                    ).sample_within_bounds(minimum=60 * 24 * 0.5)
 
                     # Determine MRS at discharge
                     if patient.mrs_type == 0:
@@ -1246,7 +1262,9 @@ class Model:
 
                 elif patient.patient_diagnosis_type == "TIA":
                     sampled_ward_act_time = (
-                        self.tia_ward_time_dist.sample_within_bounds(minimum=1)
+                        self.tia_ward_time_dist.sample_within_bounds(
+                            minimum=60 * 24 * 0.5
+                        )
                     )
                     trace(
                         time=self.env.now,
@@ -1260,7 +1278,9 @@ class Model:
 
                 else:  # diag > 2 — stroke mimic / non-stroke
                     sampled_ward_act_time = (
-                        self.non_stroke_ward_time_dist.sample_within_bounds(minimum=1)
+                        self.non_stroke_ward_time_dist.sample_within_bounds(
+                            minimum=60 * 24 * 0.5
+                        )
                     )
                     trace(
                         time=self.env.now,
