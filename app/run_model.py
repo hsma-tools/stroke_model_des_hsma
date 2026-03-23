@@ -56,6 +56,16 @@ g.gen_graph = True
 
 st.title("Stroke Ward Model")
 
+st.subheader("Instructions")
+
+st.write("""
+Use the **parameters** in the sidebar to set up your scenario, then run the
+model using **Run a new scenario**. You are required to give each run a
+**name**. You can optionally **save the session to a file** if you
+want to reuse its results for comparing scenarios later by
+**loading a previous session**.
+""")
+
 #########################
 # MARK: Inputs          #
 #########################
