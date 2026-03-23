@@ -152,7 +152,7 @@ This will run the tests as well as generating a rich html report, which will the
 
 The documentation site is provided using mkdocs-material and mkdocstrings.
 
-It can be accessed at [sammirosser.com/jw_hsma_des_stroke_project/](http://sammirosser.com/jw_hsma_des_stroke_project/)
+It can be accessed at <https://hsma-tools.github.io/stroke_model_des_hsma/>.
 
 ### Updating the documentation
 
