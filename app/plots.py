@@ -411,47 +411,101 @@ def generate_occupancy_plots(my_trial, warm_up_duration_days, sim_duration_days)
 
 @st.fragment
 def plot_time_heatmap(patient_df, time_vars):
+    # Choose time variable to visualise
     time_col_pretty = st.selectbox(
         "Select a time variable to visualise", options=time_vars
     )
-
     time_col = time_vars[time_col_pretty]
+
+    # Add timestamp column
     df = add_sim_timestamp(patient_df, time_col=time_col, time_unit="minutes")
 
-    # 1. Extract the hour
-    df[f"{time_col}_hour"] = df["timestamp"].apply(lambda x: x.hour)
-
-    # 2. Get counts and reindex to include all hours (0-23)
-    counts_series = df[f"{time_col}_hour"].value_counts()
-
-    # This ensures 0 through 23 are all present, filling missing hours with 0
-    full_hours_range = range(24)
-    counts_by_hour = (
-        counts_series.reindex(full_hours_range, fill_value=0).sort_index().reset_index()
+    # Choose display mode for heatmap
+    agg_mode_dict = {
+        "Total patients across all runs": "total",
+        "Average patients per run": "avg",
+        "Separate heatmap for each run": "facet"
+    }
+    agg_mode_pretty = st.radio(
+        label="How should we summarise patient counts over time?",
+        options=list(agg_mode_dict.keys()),
+        index=0,
+        horizontal=True
     )
-    counts_by_hour.columns = [f"{time_col}_hour", "count"]
+    agg_mode = agg_mode_dict[agg_mode_pretty]
 
+    # Extract the hour
+    df[f"{time_col}_hour"] = df["timestamp"].dt.hour
+
+    # Get counts and reindex to include all hours (0-23)
+    if agg_mode == "total":
+        counts = (
+            df[f"{time_col}_hour"]
+            .value_counts()
+            .reindex(range(24), fill_value=0)
+            .sort_index()
+            .reset_index()
+        )
+        counts.columns=[f"{time_col}_hour", "count"]
+        z = [counts["count"].values]
+        y = ["All runs"]
+        title_suffix = " (total across runs)"
+
+    elif agg_mode == "avg":
+        counts = (
+            df.groupby("run")[f"{time_col}_hour"]
+            .value_counts()
+            .unstack(fill_value=0)
+            .reindex(columns=range(24), fill_value=0)
+        )
+        avg_counts = counts.mean(axis=0)
+        counts = avg_counts.reset_index()
+        counts.columns = ["hour", "count"]
+        z = [counts["count"].values]
+        y = ["Average run"]
+        title_suffix = " (average per run)"
+
+    elif agg_mode == "facet":
+        counts = (
+            df.groupby(["run", f"{time_col}_hour"])
+            .size()
+            .unstack(fill_value=0)
+            .reindex(columns=range(24), fill_value=0)
+            .sort_index(ascending=False)
+        )
+        z = counts.values
+        y = [f"Run {r}" for r in counts.index]
+        title_suffix = " (per run)"
+
+    else:
+        raise ValueError("Invalid agg_mode")
+
+    # Create heatmap
     fig = go.Figure(
         data=go.Heatmap(
-            z=[counts_by_hour["count"].values],
-            x=counts_by_hour[f"{time_col}_hour"].values,
-            y=["All"],
+            z=z,
+            x=list(range(24)),
+            y=y,
             colorscale="Blues",
             hoverongaps=False,
             xgap=3,
         )
     )
 
+    # Add title, x axis title and improved x axis labels
     fig.update_layout(
-        title=f"{time_col_pretty} Heatmap by Hour",
-        xaxis_title="Hour of Day",
-        yaxis=dict(showticklabels=False),
+        title=f"{time_col_pretty} heatmap by hour{title_suffix}",
+        xaxis_title="Hour of day",
         xaxis=dict(
             tickmode="array",
             tickvals=list(range(24)),
-            ticktext=[f"{h}:00" for h in range(24)],  # Optional: prettier labels
-        ),
+            ticktext=[f"{h}:00" for h in range(24)]
+        )
     )
+
+    # Hide Y axis labels unless facet
+    if agg_mode != "facet":
+        fig.update_layout(yaxis=dict(showticklabels=False))
 
     return st.plotly_chart(fig)
 
