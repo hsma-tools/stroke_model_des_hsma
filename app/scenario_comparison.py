@@ -322,6 +322,7 @@ def style_difference_column(df: pd.DataFrame):
         A Styler object with conditional colouring applied to the
         "Difference" column.
     """
+
     def colour(val):
         if not isinstance(val, (int, float)):
             return ""
@@ -487,7 +488,7 @@ def render_scenario_manager():
             continue
 
         baseline_label = runs[st.session_state.baseline_index]["label"]
-        st.subheader(f"{run['label']} :grey[vs] {baseline_label}")
+        st.subheader(f"{run['label']} :grey[vs {baseline_label}]")
 
         render_key_metric_cards(run, baseline)
 
