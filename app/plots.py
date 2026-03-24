@@ -233,6 +233,11 @@ def plot_dfg_per_feature(split_vars, patient_df):
         The function renders DFG images directly in the
         Streamlit app.
     """
+    filter_out_incomplete_journeys = st.toggle(
+        "Filter out patients who didn't complete their stay during the model run?",
+        value=True,
+    )
+
     # Choose an optional faceting variable
     selected_facet_var = st.selectbox(
         "Select a metric to facet the values by",
@@ -269,6 +274,8 @@ def plot_dfg_per_feature(split_vars, patient_df):
 
     def _render_dfg(container, df, run, unit, title=None):
         """Build and render a single DFG into `container`."""
+        if filter_out_incomplete_journeys:
+            df = df[df["journey_completed"] == True].copy()
         event_log = convert_event_log(df, run=run)
         event_log["event"] = event_log["event"].apply(
             lambda x: x.replace("_time", "").replace("_", " ")
@@ -444,13 +451,13 @@ def plot_time_heatmap(patient_df, time_vars):
     agg_mode_dict = {
         "Total patients across all runs": "total",
         "Average patients per run": "avg",
-        "Separate heatmap for each run": "facet"
+        "Separate heatmap for each run": "facet",
     }
     agg_mode_pretty = st.radio(
         label="How should we summarise patient counts over time?",
         options=list(agg_mode_dict.keys()),
         index=0,
-        horizontal=True
+        horizontal=True,
     )
     agg_mode = agg_mode_dict[agg_mode_pretty]
 
@@ -466,7 +473,7 @@ def plot_time_heatmap(patient_df, time_vars):
             .sort_index()
             .reset_index()
         )
-        counts.columns=[f"{time_col}_hour", "count"]
+        counts.columns = [f"{time_col}_hour", "count"]
         z = [counts["count"].values]
         y = ["All runs"]
         title_suffix = " (total across runs)"
@@ -519,8 +526,8 @@ def plot_time_heatmap(patient_df, time_vars):
         xaxis=dict(
             tickmode="array",
             tickvals=list(range(24)),
-            ticktext=[f"{h}:00" for h in range(24)]
-        )
+            ticktext=[f"{h}:00" for h in range(24)],
+        ),
     )
 
     # Hide Y axis labels unless facet
