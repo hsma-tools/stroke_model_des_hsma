@@ -85,7 +85,7 @@ Off = no therapy support.
 
 If therapy support enabled, patients with a higher
  level of disability will be eligible for admission avoidance via SDEC (maximum
- MRS of 3 rather than 2 without therapy).
+ MRS of 3 rather than 1 without therapy).
 
  Therapy incurs no cost in the model as
  the number of patients seen does not change - the point in their journey and
