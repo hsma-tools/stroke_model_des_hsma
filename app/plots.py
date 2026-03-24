@@ -352,7 +352,7 @@ def generate_occupancy_plots(my_trial, warm_up_duration_days, sim_duration_days)
     my_trial : object
         Trial object containing simulation results, including
         attributes such as `ward_occupancy_df`,
-        `sdec_occupancy_df`, ``df_trial_results` and
+        `sdec_occupancy_df`, `df_trial_results` and
         `trial_patient_df`.
     warm_up_duration_days : float
         Warm-up duration in days. Used both for plotting and
@@ -411,47 +411,121 @@ def generate_occupancy_plots(my_trial, warm_up_duration_days, sim_duration_days)
 
 @st.fragment
 def plot_time_heatmap(patient_df, time_vars):
+    """
+    Plot a heatmap of patient counts by hour of day for a selected event time.
+
+    Users can choose which event time to visualise and how to aggregate counts
+    across simulation runs (total, average per run, or one heatmap per run).
+
+    Parameters
+    ----------
+    patient_df : pandas.DataFrame
+        Patient-level table containing event-time columns, a "run" column
+        and any other relevant metadata.
+    time_vars : dict
+        Mapping from user-facing time variable labels to column names in
+        `patient_df` representing event times.
+
+    Returns
+    -------
+    None
+        The function renders a Plotly heatmap directly in the Streamlit app.
+    """
+    # Choose time variable to visualise
     time_col_pretty = st.selectbox(
         "Select a time variable to visualise", options=time_vars
     )
-
     time_col = time_vars[time_col_pretty]
+
+    # Add timestamp column
     df = add_sim_timestamp(patient_df, time_col=time_col, time_unit="minutes")
 
-    # 1. Extract the hour
-    df[f"{time_col}_hour"] = df["timestamp"].apply(lambda x: x.hour)
-
-    # 2. Get counts and reindex to include all hours (0-23)
-    counts_series = df[f"{time_col}_hour"].value_counts()
-
-    # This ensures 0 through 23 are all present, filling missing hours with 0
-    full_hours_range = range(24)
-    counts_by_hour = (
-        counts_series.reindex(full_hours_range, fill_value=0).sort_index().reset_index()
+    # Choose display mode for heatmap
+    agg_mode_dict = {
+        "Total patients across all runs": "total",
+        "Average patients per run": "avg",
+        "Separate heatmap for each run": "facet"
+    }
+    agg_mode_pretty = st.radio(
+        label="How should we summarise patient counts over time?",
+        options=list(agg_mode_dict.keys()),
+        index=0,
+        horizontal=True
     )
-    counts_by_hour.columns = [f"{time_col}_hour", "count"]
+    agg_mode = agg_mode_dict[agg_mode_pretty]
 
+    # Extract the hour
+    df[f"{time_col}_hour"] = df["timestamp"].dt.hour
+
+    # Get counts and reindex to include all hours (0-23)
+    if agg_mode == "total":
+        counts = (
+            df[f"{time_col}_hour"]
+            .value_counts()
+            .reindex(range(24), fill_value=0)
+            .sort_index()
+            .reset_index()
+        )
+        counts.columns=[f"{time_col}_hour", "count"]
+        z = [counts["count"].values]
+        y = ["All runs"]
+        title_suffix = " (total across runs)"
+
+    elif agg_mode == "avg":
+        counts = (
+            df.groupby("run")[f"{time_col}_hour"]
+            .value_counts()
+            .unstack(fill_value=0)
+            .reindex(columns=range(24), fill_value=0)
+        )
+        avg_counts = counts.mean(axis=0)
+        counts = avg_counts.reset_index()
+        counts.columns = ["hour", "count"]
+        z = [counts["count"].values]
+        y = ["Average run"]
+        title_suffix = " (average per run)"
+
+    elif agg_mode == "facet":
+        counts = (
+            df.groupby(["run", f"{time_col}_hour"])
+            .size()
+            .unstack(fill_value=0)
+            .reindex(columns=range(24), fill_value=0)
+            .sort_index(ascending=False)
+        )
+        z = counts.values
+        y = [f"Run {r}" for r in counts.index]
+        title_suffix = " (per run)"
+
+    else:
+        raise ValueError("Invalid agg_mode")
+
+    # Create heatmap
     fig = go.Figure(
         data=go.Heatmap(
-            z=[counts_by_hour["count"].values],
-            x=counts_by_hour[f"{time_col}_hour"].values,
-            y=["All"],
+            z=z,
+            x=list(range(24)),
+            y=y,
             colorscale="Blues",
             hoverongaps=False,
             xgap=3,
         )
     )
 
+    # Add title, x axis title and improved x axis labels
     fig.update_layout(
-        title=f"{time_col_pretty} Heatmap by Hour",
-        xaxis_title="Hour of Day",
-        yaxis=dict(showticklabels=False),
+        title=f"{time_col_pretty} heatmap by hour{title_suffix}",
+        xaxis_title="Hour of day",
         xaxis=dict(
             tickmode="array",
             tickvals=list(range(24)),
-            ticktext=[f"{h}:00" for h in range(24)],  # Optional: prettier labels
-        ),
+            ticktext=[f"{h}:00" for h in range(24)]
+        )
     )
+
+    # Hide Y axis labels unless facet
+    if agg_mode != "facet":
+        fig.update_layout(yaxis=dict(showticklabels=False))
 
     return st.plotly_chart(fig)
 
@@ -462,6 +536,32 @@ def plot_histogram(
     patient_level_metric_choices,
     split_vars,
 ):
+    """
+    Plot histograms of selected patient-level metrics, optionally faceted by
+    a categorical patient attribute.
+
+    Users can choose one or more metrics, optionally facet by a variable in
+    `split_vars`, and toggle normalisation of length-of-stay variables from
+    minutes to days.
+
+    Parameters
+    ----------
+    patient_df : pandas.DataFrame
+        Patient-level table containing an "id" column, a "run" column
+        and the metrics referenced in `patient_level_metric_choices`.
+    patient_level_metric_choices : dict
+        Mapping from user-facing metric labels to column names in
+        `patient_df`.
+    split_vars : dict
+        Mapping from user-facing facet labels to column names in
+        `patient_df` that can be used to facet the histograms.
+
+    Returns
+    -------
+    None
+        The function renders Plotly histogram charts directly in the
+        Streamlit app.
+    """
     patient_level_metric_selected = st.multiselect(
         "Select a metric to view the distribution of",
         options=list(patient_level_metric_choices.keys()),
@@ -519,6 +619,25 @@ def plot_histogram(
 
 @st.fragment
 def plot_arrivals_per_day_histogram(trial_object):
+    """
+    Plot arrivals-per-day distributions and time series for a selected run.
+
+    This function wraps `stroke_ward_model.plots.TrialPlots` to
+    generate a histogram and time series of arrivals per day, and renders
+    both charts in the Streamlit app.
+
+    Parameters
+    ----------
+    trial_object : object
+        Trial object containing simulation results and a
+        `trial_patient_df` attribute with a "run" column.
+
+    Returns
+    -------
+    None
+        The function renders Plotly charts directly in the Streamlit app.
+    """
+    ...
 
     st.subheader("Arrivals Per Day")
 

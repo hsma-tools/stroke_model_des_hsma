@@ -189,6 +189,20 @@ patient_level_metric_choices = {
 
 @st.fragment
 def render_run_manager():
+    """
+    Display controls to manage saved simulation runs.
+
+    Within an expander, this fragment lists saved runs, allows users to
+    select one or more runs to remove, warns if the baseline run is
+    selected, and updates `st.session_state.metrics_runs` and
+    `st.session_state.baseline_index` accordingly. If no runs have been
+    saved yet, the fragment returns without rendering UI.
+
+    Returns
+    -------
+    None
+        The function renders controls directly in the Streamlit app.
+    """
     runs = st.session_state.metrics_runs
     if not runs:
         return
@@ -226,6 +240,18 @@ def render_run_manager():
 
 
 def get_baseline() -> Metrics | None:
+    """
+    Retrieve the current baseline `Metrics` object from session state.
+
+    The baseline is determined by `st.session_state.baseline_index` and
+    is taken from `st.session_state.metrics_runs`. If no runs are stored,
+    this function returns `None`.
+
+    Returns
+    -------
+    stroke_ward_model.metrics.Metrics or None
+        The baseline `Metrics` instance, or `None` if no runs exist.
+    """
     runs = st.session_state.metrics_runs
     if not runs:
         return None
@@ -233,6 +259,32 @@ def get_baseline() -> Metrics | None:
 
 
 def build_comparison_df(run, baseline, param_map):
+    """
+    Build a comparison table for a single run against a baseline.
+
+    The function uses `Metrics.diff` to compute per-metric differences
+    between the selected run and the baseline, and returns a tidy
+    `pandas.DataFrame` suitable for display in Streamlit.
+
+    Parameters
+    ----------
+    run : dict
+        A run entry from `st.session_state.metrics_runs` containing a
+        "metrics" key whose value supports `.diff(baseline)`.
+    baseline : stroke_ward_model.metrics.Metrics
+        Baseline metrics object used as the reference in the comparison.
+    param_map : dict
+        Mapping from metric attribute names to tuples of the form
+        `(label, unit, ...)`. Only attributes present both in
+        `param_map` and in the diff result are included.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data frame with columns "Metric", "Unit",
+        "Chosen Baseline", "Comparison Scenario" and
+        "Difference".
+    """
     diffs = run["metrics"].diff(baseline)
     rows = []
     for attr, (label, unit, *_) in param_map.items():
@@ -252,6 +304,24 @@ def build_comparison_df(run, baseline, param_map):
 
 
 def style_difference_column(df: pd.DataFrame):
+    """
+    Style the "Difference" column of a comparison DataFrame.
+
+    Positive differences are coloured green, negative differences red,
+    and zero or non-numeric values use the default styling.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Data frame produced by `build_comparison_df` with a
+        "Difference" column.
+
+    Returns
+    -------
+    pandas.io.formats.style.Styler
+        A Styler object with conditional colouring applied to the
+        "Difference" column.
+    """
     def colour(val):
         if not isinstance(val, (int, float)):
             return ""
@@ -265,6 +335,27 @@ def style_difference_column(df: pd.DataFrame):
 
 
 def render_key_metric_cards(run, baseline):
+    """
+    Render key outcome metrics for a run as Streamlit metric cards.
+
+    This function compares the given run to the baseline using
+    `Metrics.diff`, selects metrics flagged as key in `OUTCOME_PARAMS`,
+    formats values and deltas (with special handling for currency), and
+    displays them as three-column cards with icons and coloured deltas.
+
+    Parameters
+    ----------
+    run : dict
+        A run entry from `st.session_state.metrics_runs` containing a
+        "label" and a "metrics" object that supports `.diff`.
+    baseline : stroke_ward_model.metrics.Metrics
+        Baseline metrics object used as the reference for deltas.
+
+    Returns
+    -------
+    None
+        The function renders metric cards directly in the Streamlit app.
+    """
     diffs = run["metrics"].diff(baseline)
     key_metrics = {
         attr: val
@@ -307,6 +398,19 @@ def render_key_metric_cards(run, baseline):
 
 
 def render_full_comparison_table():
+    """
+    Render a full comparison table of scenario parameters and outcomes.
+
+    For each metric defined in `SCENARIO_PARAMS` and `OUTCOME_PARAMS`,
+    this function extracts values from every saved run, assembles them into
+    a multi-indexed `pandas.DataFrame` (indexed by metric and unit), and
+    displays the table with one column per run.
+
+    Returns
+    -------
+    None
+        The function renders a data table directly in the Streamlit app.
+    """
     runs = st.session_state.metrics_runs
     if not runs:
         st.info("No runs saved yet.")
@@ -337,6 +441,21 @@ def render_full_comparison_table():
 
 @st.fragment
 def render_scenario_manager():
+    """
+    Display an interface to select a baseline run and compare scenarios.
+
+    This fragment renders a summary table across all runs, allows users to
+    choose a baseline run, and for each non-baseline run displays key
+    metric cards plus separate comparison tables for scenario parameters
+    and outcomes. If there are fewer than two runs, it shows an informative
+    message instead.
+
+    Returns
+    -------
+    None
+        The function renders controls, metric cards and tables directly in
+        the Streamlit app.
+    """
     runs = st.session_state.metrics_runs
 
     if not runs:

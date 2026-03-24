@@ -26,7 +26,9 @@ You can also [view the slides shared](https://docs.google.com/presentation/d/18i
 
 The majority of the work in this repository has been undertaken by **John Williams** ([jfwilliams4](https://github.com/jfwilliams4)), a Stroke Performance Analyst at Maidstone and Tunbridge Wells NHS Trust.
 
-Additional tweaks, documentation creation and web app creation has been undertaken by Sammi Rosser ([Bergam0t](https://github.com/Bergam0t)), a trainer on the HSMA Programme.
+Additional tweaks, documentation creation and web app creation has been undertaken by **Sammi Rosser** ([Bergam0t](https://github.com/Bergam0t)), a trainer on the HSMA Programme.
+
+Supporting contributions have also been provided by **Amy Heather** ([amyheather](https://github.com/amyheather)), a researcher from the University of Exeter.
 
 <br>
 
@@ -152,7 +154,7 @@ This will run the tests as well as generating a rich html report, which will the
 
 The documentation site is provided using mkdocs-material and mkdocstrings.
 
-It can be accessed at [sammirosser.com/jw_hsma_des_stroke_project/](http://sammirosser.com/jw_hsma_des_stroke_project/)
+It can be accessed at <https://hsma-tools.github.io/stroke_model_des_hsma/>.
 
 ### Updating the documentation
 

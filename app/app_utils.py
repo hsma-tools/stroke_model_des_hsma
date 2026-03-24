@@ -136,6 +136,16 @@ def save_run(metrics: Metrics, label: str = None):
 
 
 def save_state_to_json() -> str:
+    """
+    Loops through all entries in `st.session_state.metrics_runs`, converts
+    them to `MetricsSnapshot` instances, and returns a JSON string containing
+    the baseline index and a list of run dictionaries.
+
+    Returns
+    -------
+    str
+        JSON string representing the current session's runs and baseline index.
+    """
     snapshots = []
     for r in st.session_state.metrics_runs:
         metrics = r["metrics"]
@@ -157,7 +167,21 @@ def save_state_to_json() -> str:
 
 
 def load_state_from_json(json_str: str):
-    """Deserialise and reinitialise session state from a JSON string."""
+    """
+    Restore simulation runs and baseline index in session state from JSON.
+
+    Parameters
+    ----------
+    json_str : str
+        JSON string previously produced by `save_state_to_json` containing
+        `baseline_index` and a list of run dictionaries.
+
+    Raises
+    ------
+    KeyError
+        If required keys (such as `runs` or `baseline_index`) are
+        missing from the JSON payload.
+    """
     data = json.loads(json_str)
     st.session_state.metrics_runs = [
         {"label": r["label"], "metrics": MetricsSnapshot.from_dict(r)}
@@ -168,6 +192,14 @@ def load_state_from_json(json_str: str):
 
 @st.fragment
 def download_state_button():
+    """
+    Render controls to prepare and download the current session state as JSON.
+
+    When at least one run exists in `st.session_state.metrics_runs`, this
+    displays a button to generate the JSON payload and a download button to
+    save it as `simulation_runs.json`. If no runs exist, a disabled
+    "prepare save file" button with a helpful tooltip is shown instead.
+    """
     if st.session_state.metrics_runs:
         # Pre-compute once into session state so it's ready for download
         # but only regenerated when runs actually change
@@ -190,6 +222,15 @@ def download_state_button():
 
 
 def render_state_io():
+    """
+    Render UI for loading and saving simulation runs in the Streamlit app.
+
+    This creates a two-column layout: the left column provides controls to
+    upload a JSON file and load previous runs into `st.session_state`,
+    and the right column shows controls for saving the current session
+    to disk. It also initialises and refreshes a textual summary of the
+    runs currently held in memory.
+    """
     col_load, col_spacing, col_save = st.columns([0.45, 0.1, 0.45])
     with col_load:
         st.subheader("Load a previous session")
@@ -219,6 +260,14 @@ def render_state_io():
 
 
 def refresh_runs_display():
+    """
+    Update the on-page summary of simulation runs stored in memory.
+
+    If a placeholder has been registered in `st.session_state.runs_display`,
+    this function renders either a bulleted list of run labels from
+    `st.session_state.metrics_runs` or a caption indicating that no runs
+    are currently available.
+    """
     if "runs_display" not in st.session_state:
         return
     runs = st.session_state.get("metrics_runs", [])

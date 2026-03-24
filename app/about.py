@@ -71,7 +71,7 @@ considered carefully.
 with tab_model:
     st.header("Where can I find technical details about the model?")
     st.markdown(
-        "Additional details can be found on the documentation site: [http://sammirosser.com/jw_hsma_des_stroke_project/](http://sammirosser.com/jw_hsma_des_stroke_project/)"
+        "Additional details can be found on the documentation site: [https://hsma-tools.github.io/stroke_model_des_hsma/](https://hsma-tools.github.io/stroke_model_des_hsma/)"
     )
     # TODO: Link to the documentation and STRESS guidance within documentation
 

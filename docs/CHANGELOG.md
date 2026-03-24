@@ -50,7 +50,7 @@ of the code for contributors with less experience in coding, have been avoided.
         - Whether SDEC runs with therapy support
         - Cost of beds
             - method of cost calculation for thrombolysis
-            - estimated bed day saving per patient of SDEC ([Click here to view commit](https://github.com/Bergam0t/jw_hsma_des_stroke_project/commit/48d0fc409065d6b47a88e0b0b9e85cf7cf433098))
+            - estimated bed day saving per patient of SDEC ([Click here to view commit](https://github.com/hsma-tools/stroke_model_des_hsma/commit/48d0fc409065d6b47a88e0b0b9e85cf7cf433098))
         - Thrombolysis contraindication rate for ischaemic stroke patients
         - Number of runs
         - Run and warm-up duration
@@ -174,11 +174,11 @@ of the code for contributors with less experience in coding, have been avoided.
 
 ### SDEC
 
-- Fixed typo in conditional check where it was accidentally looking at the sdec_value in the case where sdec_value was 100, where instead it should have been checking for ctp_value == 100 in that branch ([Click here to view commit, though note it's not showing the original code properly](https://github.com/Bergam0t/jw_hsma_des_stroke_project/commit/e5f653217ba40c3364cefcbad21dfb7951dc7eec))
+- Fixed typo in conditional check where it was accidentally looking at the sdec_value in the case where sdec_value was 100, where instead it should have been checking for ctp_value == 100 in that branch ([Click here to view commit, though note it's not showing the original code properly](https://github.com/hsma-tools/stroke_model_des_hsma/commit/e5f653217ba40c3364cefcbad21dfb7951dc7eec))
 - Swapped SDEC fullness check from <= to < (as previously may have allowed patients in if SDEC at capacity)
     - **note that this has also been added into the original repository** (https://github.com/jfwilliams4/des_stroke_project/commit/d68374d3b24ab28609f63eb4eb2019ac0d7faf85)
-- Remove resource check from SDEC admission code as this was seemingly sometimes causing delayed arrivals ([Click here to view commit](https://github.com/Bergam0t/jw_hsma_des_stroke_project/commit/aedd7cd5555424984c63becc2d95ef548974956e)) where the patient would enter SDEC during a period where SDEC should be closed
-- Refactored SDEC savings code to ensure that savings are calculated intuitively/consistently across different parts of the model ([Click here to view commit](https://github.com/Bergam0t/jw_hsma_des_stroke_project/commit/dc675eab495cd1d9641ead67c897eb0bfdecc71f))
+- Remove resource check from SDEC admission code as this was seemingly sometimes causing delayed arrivals ([Click here to view commit](https://github.com/hsma-tools/stroke_model_des_hsma/commit/aedd7cd5555424984c63becc2d95ef548974956e)) where the patient would enter SDEC during a period where SDEC should be closed
+- Refactored SDEC savings code to ensure that savings are calculated intuitively/consistently across different parts of the model ([Click here to view commit](https://github.com/hsma-tools/stroke_model_des_hsma/commit/dc675eab495cd1d9641ead67c897eb0bfdecc71f))
 
 ### Patient Pathways
 
@@ -188,16 +188,16 @@ of the code for contributors with less experience in coding, have been avoided.
 ### Thrombolysis
 
 - Added a new flag to differentiate between patients for whom the CTP enables their thrombolysis treatment (i.e. those with an onset type of 1 - unknown but inside thrombolysable window or known and inside extended thrombolysable window with CTP).
-    - this has replaced the logic check used to determine whether patients' savings should be counted, so fewer patients now meet the threshold for being counted as a thrombolysis saving ([Click here to view commit](https://github.com/Bergam0t/jw_hsma_des_stroke_project/commit/94e0303f2ec5a9642dbbc298f050a40fe89f2e0b))
+    - this has replaced the logic check used to determine whether patients' savings should be counted, so fewer patients now meet the threshold for being counted as a thrombolysis saving ([Click here to view commit](https://github.com/hsma-tools/stroke_model_des_hsma/commit/94e0303f2ec5a9642dbbc298f050a40fe89f2e0b))
 - Added an additional step in thrombolysis to reflect the fact that not all patients who are eligible for thrombolysis on the basis of their arrival time will be eligible for thrombolysis in reality due to factors such as absolute or relative contraindications (e.g. mild stroke symptoms and/or symptoms that are already improving, previous stroke within a certain  time period, severe uncontrolled hypertension, dementia, pregnancy, recently taken certain oral anticoagulants, previous use of thrombolysis for other conditions within a given time period, arriving later in thrombolysable window). See https://pmc.ncbi.nlm.nih.gov/articles/PMC9323435/ which found that 47% of patients who had a known onset <4.5 hours ago were not treated with thrombolysis, with 26% having absolute contraindication and 74% having relative contraindication, as well as https://pmc.ncbi.nlm.nih.gov/articles/PMC9890612/ and https://www.ncbi.nlm.nih.gov/books/NBK557411/.
     - Before applying this, thrombolysis rates in the model were unreasonably high once the onset time ratio had been moved from placeholder defaults (33/33/33 split of known, thrombolysable if CTPd, not thrombolysable) to more realistic defaults informed by literature
-    - See [commit](https://github.com/Bergam0t/jw_hsma_des_stroke_project/commit/94e0303f2ec5a9642dbbc298f050a40fe89f2e0b)
+    - See [commit](https://github.com/hsma-tools/stroke_model_des_hsma/commit/94e0303f2ec5a9642dbbc298f050a40fe89f2e0b)
 
 ### Patients
 
-- Fixed bug in patient diagnosis allocation where a diagnosis between the stroke mimic and non-stroke threshold would not get allocated any diagnosis ([Click here to view commit](https://github.com/Bergam0t/jw_hsma_des_stroke_project/commit/ccecec1b5c6c1239b43951265a8ef72dbf1cc319))
+- Fixed bug in patient diagnosis allocation where a diagnosis between the stroke mimic and non-stroke threshold would not get allocated any diagnosis ([Click here to view commit](https://github.com/hsma-tools/stroke_model_des_hsma/commit/ccecec1b5c6c1239b43951265a8ef72dbf1cc319))
     - note that this has also been added into the original repository (https://github.com/jfwilliams4/des_stroke_project/commit/d68374d3b24ab28609f63eb4eb2019ac0d7faf85)
-- Ensured ward LOS was recorded in patient object for both thrombolysed and non-thrombolysed patients ([Click here to view commit](https://github.com/Bergam0t/jw_hsma_des_stroke_project/commit/874069fcf5081925f7f460f7caf2ba9f570b440b))
+- Ensured ward LOS was recorded in patient object for both thrombolysed and non-thrombolysed patients ([Click here to view commit](https://github.com/hsma-tools/stroke_model_des_hsma/commit/874069fcf5081925f7f460f7caf2ba9f570b440b))
 
 ## Code Admin and Structure Changes
 

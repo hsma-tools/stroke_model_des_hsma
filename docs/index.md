@@ -14,4 +14,4 @@ This documentation contains technical details of the modelling code.
 
 For a higher-level overview, you can find details in the Streamlit app.
 
-Details of how to run the Streamlit app locally can be found [in the repository readme](https://github.com/Bergam0t/jw_hsma_des_stroke_project?tab=readme-ov-file#discrete-event-simulation-of-a-stroke-unit---what-impact-do-specialised-stroke-same-day-emergency-care-units-and-ct-perfusion-scanning-have-on-stroke-patient-flow).
+Details of how to run the Streamlit app locally can be found [in the repository readme](https://github.com/hsma-tools/stroke_model_des_hsma?tab=readme-ov-file#discrete-event-simulation-of-a-stroke-unit---what-impact-do-specialised-stroke-same-day-emergency-care-units-and-ct-perfusion-scanning-have-on-stroke-patient-flow).
