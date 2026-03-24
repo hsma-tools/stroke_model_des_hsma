@@ -352,7 +352,7 @@ def generate_occupancy_plots(my_trial, warm_up_duration_days, sim_duration_days)
     my_trial : object
         Trial object containing simulation results, including
         attributes such as `ward_occupancy_df`,
-        `sdec_occupancy_df`, ``df_trial_results` and
+        `sdec_occupancy_df`, `df_trial_results` and
         `trial_patient_df`.
     warm_up_duration_days : float
         Warm-up duration in days. Used both for plotting and
@@ -411,6 +411,26 @@ def generate_occupancy_plots(my_trial, warm_up_duration_days, sim_duration_days)
 
 @st.fragment
 def plot_time_heatmap(patient_df, time_vars):
+    """
+    Plot a heatmap of patient counts by hour of day for a selected event time.
+
+    Users can choose which event time to visualise and how to aggregate counts
+    across simulation runs (total, average per run, or one heatmap per run).
+
+    Parameters
+    ----------
+    patient_df : pandas.DataFrame
+        Patient-level table containing event-time columns, a "run" column
+        and any other relevant metadata.
+    time_vars : dict
+        Mapping from user-facing time variable labels to column names in
+        `patient_df` representing event times.
+
+    Returns
+    -------
+    None
+        The function renders a Plotly heatmap directly in the Streamlit app.
+    """
     # Choose time variable to visualise
     time_col_pretty = st.selectbox(
         "Select a time variable to visualise", options=time_vars
@@ -516,6 +536,32 @@ def plot_histogram(
     patient_level_metric_choices,
     split_vars,
 ):
+    """
+    Plot histograms of selected patient-level metrics, optionally faceted by
+    a categorical patient attribute.
+
+    Users can choose one or more metrics, optionally facet by a variable in
+    `split_vars`, and toggle normalisation of length-of-stay variables from
+    minutes to days.
+
+    Parameters
+    ----------
+    patient_df : pandas.DataFrame
+        Patient-level table containing an "id" column, a "run" column
+        and the metrics referenced in `patient_level_metric_choices`.
+    patient_level_metric_choices : dict
+        Mapping from user-facing metric labels to column names in
+        `patient_df`.
+    split_vars : dict
+        Mapping from user-facing facet labels to column names in
+        `patient_df` that can be used to facet the histograms.
+
+    Returns
+    -------
+    None
+        The function renders Plotly histogram charts directly in the
+        Streamlit app.
+    """
     patient_level_metric_selected = st.multiselect(
         "Select a metric to view the distribution of",
         options=list(patient_level_metric_choices.keys()),
@@ -573,6 +619,25 @@ def plot_histogram(
 
 @st.fragment
 def plot_arrivals_per_day_histogram(trial_object):
+    """
+    Plot arrivals-per-day distributions and time series for a selected run.
+
+    This function wraps `stroke_ward_model.plots.TrialPlots` to
+    generate a histogram and time series of arrivals per day, and renders
+    both charts in the Streamlit app.
+
+    Parameters
+    ----------
+    trial_object : object
+        Trial object containing simulation results and a
+        `trial_patient_df` attribute with a "run" column.
+
+    Returns
+    -------
+    None
+        The function renders Plotly charts directly in the Streamlit app.
+    """
+    ...
 
     st.subheader("Arrivals Per Day")
 
