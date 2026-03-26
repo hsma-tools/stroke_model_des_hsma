@@ -2,7 +2,6 @@
 App utilities
 """
 
-from streamlit_extras.stylable_container import stylable_container
 import streamlit as st
 from stroke_ward_model.metrics import Metrics, MetricsSnapshot
 import json
@@ -89,22 +88,29 @@ def iconMetricContainer(
         font_family = "Material Icons"
 
     # Base CSS that injects the icon before the st.metric value
+    # Determine container class based on key
+    container_class = f"st-key-{key}" if key else ""
+
+    # Base CSS that injects the icon before the st.metric value
     css_style_icon = f"""
-                    div[data-testid="stMetricValue"]>div::before
-                    {{
-                        font-family: {font_family};
-                        content: "\\{icon_unicode}";
-                        vertical-align: -20%;
-                        color: {icon_color};
-                    }}
-                    """
+    div.{container_class} div[data-testid="stMetricValue"]>div::before {{
+        font-family: {font_family};
+        content: "\\{icon_unicode}";
+        vertical-align: -20%;
+        color: {icon_color};
+    }}
+    """
 
     # Optionally append user-provided extra CSS
     if css_style is not None:
         css_style_icon += f"\n{css_style}"
 
-    # Create the stylable container with the assembled CSS
-    iconMetric = stylable_container(key=key, css_styles=css_style_icon)
+    # Create the container
+    iconMetric = st.container(key=key)
+
+    # Inject the CSS
+    st.html(f"<style>{css_style_icon}</style>")
+
     return iconMetric
 
 
