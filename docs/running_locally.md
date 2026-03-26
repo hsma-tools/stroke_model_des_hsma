@@ -16,7 +16,7 @@ To run the model via a script, with prompts for input variables, run the file `s
 
 It is possible to run the model via a script, but for easy access to model parameters and all results tables and outputs, it is recommended to use the web app interface.
 
-The hosted web app is available at [stroke-des.streamlit.app/](https://stroke-des.streamlit.app/).
+The hosted web app is available at [stroke-model-des.streamlit.app/](https://stroke-model-des.streamlit.app/).
 
 If you are unable to install Python code locally, you can use this free hosted version of the app, though note it may run more slowly.
 

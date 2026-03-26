@@ -81,9 +81,9 @@ The typical runtime is around 2-3 minutes.
 
 It is possible to run the model via a script, but for easy access to model parameters and all results tables and outputs, it is recommended to use the web app interface.
 
-The hosted web app is available at [stroke-des.streamlit.app/](https://stroke-des.streamlit.app/).
+The hosted web app is available at [stroke-model-des.streamlit.app/](https://stroke-model-des.streamlit.app/).
 
-[![Screenshot from the web app](docs/assets/app_preview.png)](https://stroke-des.streamlit.app/)
+[![Screenshot from the web app](docs/assets/app_preview.png)](https://stroke-model-des.streamlit.app/)
 
 If you are unable to install Python code locally, you can use this free hosted version of the app, though note it may run more slowly.
 
