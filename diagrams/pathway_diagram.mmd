@@ -1,0 +1,86 @@
+flowchart TB
+    A["In-hours admissions <br><br>Default 7am to 12 midnight"] --> n12["Patient Generated"]
+    B["Nurse Triage"] --> C(["Is the CT perfusion (CTP) scanner open?"])
+    C -- Yes --> n2["CTP Scan <br>(Advanced Scan)"]
+    C -- No --> n3["CT Scan"]
+    n2 --> n4(["Patient has Ischaemic Stroke <br><b><i>AND </i></b>MRS is 1 or above<br><br><b>AND onset time is known</b><br>OR onset time unknown but it is found that onset is <br>recent enough for thrombolysis to be effective"])
+    n2 --> n18(["Patient has ICH<br><b>OR </b>MRS is 0<br><br><b>OR </b>Onset time not known <br><b><i>AND</i></b> it is found that too much time has passed <br>for thrombolysis to be effective<br>"])
+    n2 --> n19(["Patient has a TIA, stroke mimic or no stroke<br>"])
+    n5(["Patient has Ischaemic Stroke<br><b>AND</b> MRS is 1 or above <br><b>AND</b> onset time is known"])
+    n26(["Patient has ICH<br><b>OR</b> MRS is 0<br><b>OR </b>Onset time not known<br>"])
+    n3 --> n5
+    n3 --> n19
+    n3 --> n26
+    n6(["Is SDEC open?"]) -- Yes --> n7(["Is a bed available in SDEC?"])
+    n7 -- Yes --> n8["Admit to SDEC"]
+    n6 -- No --> n30(["SDEC bed unavailable for any reason"])
+    n9["Admit to Ward<br><br>LOS generated based on diagnosis and MRS"] -.-> n11["Discharge"]
+    n8 --> n20(["Is therapy available in SDEC?"])
+    n1["Out-of-hours admissions (less frequent)<br><br>Default 12 midnight to 7am"] --> n12
+    n12 --> B
+    n12 -.- n13["<b>Modified Rankin Scale Score on Presentation <br></b><br>0 least disabled<br>5 most disabled<br>6 (dead) not modelled"]
+    n12 -.- n14["<b>Stroke Onset Type<br></b><br>Known<br><b>OR</b> Unknown but in CTP window<br><b>OR</b> unknown and outside CTP window<br><br><b><i>ADJUSTED FOR IN/OUT OF HOURS PRESENTATION</i></b>"]
+    n15["<b>Patient Diagnosis<br></b><br>Intracerebral Haemorrhage<br><b>OR</b> Ischaemic Stroke<br><b>OR</b> Transient Ischaemic Attack<br><b>OR</b> Stroke Mimic<br><b>OR</b> Non-Stroke"] -.- n12
+    n16["Triage Priority <br><br>Not currently used"] -.- n12
+    n4 --> n17["Thrombolyse<br><br>Reduces LOS by a defined factor (but must be monitored for at least 24 hours)"]
+    n5 --> n17
+    n17 --> n6
+    n18 --> n6
+    n20 -- "No" --> n21(["Patient has Ischaemic Stroke or ICH<br><b>AND </b>MRS is 0 or 1<b><br>AND </b>patient was <b>not</b> thrombolysed"])
+    n20 -- "Yes" --> n22(["Patient has Ischaemic Stroke or ICH<br><b>AND </b>MRS is 0, 1 or 2<br><b>AND </b>patient was <b>not</b> thrombolysed"])
+    n21 -- "Yes" --> n23["Avoided Admission"]
+    n21 -- "No" --> n25["Admission Not Avoided"]
+    n22 -- "Yes" --> n23
+    n23 -.-> n11
+    n22 -- "No" --> n25
+    n26 --> n6
+    n19 --> n6
+    n30 -- <br> --> n27(["Patient has ICH or Ischaemic Stroke"])
+    n30 --> n28(["Patient has TIA"])
+    n30 --> n29(["Patient has stroke mimic or no stroke"])
+    n28 -- "10% chance patient will be admitted to stroke ward" --> n9
+    n28 -. "90% chance patient will return to ED (outside of bounds of this model)" .-> n11
+    n27 --> n9
+    n29 -- "30% chance patient will be admitted to stroke ward" --> n9
+    n29 -. "70% patient will return to ED (outside of bounds of this model)" .-> n11
+    n7 -- "No" --> n30
+    n25 --> n27
+    n25 --> n28
+    n25 --> n29
+
+    style C fill:#FFF9C4
+    style n4 fill:#FFF9C4
+    style n18 fill:#FFF9C4
+    style n19 fill:#FFE0B2
+    style n5 fill:#FFF9C4
+    style n26 fill:#FFF9C4
+    style n6 fill:#FFF9C4
+    style n7 fill:#FFF9C4
+    style n30 fill:#FFF9C4
+    style n11 fill:#DD4040
+    style n20 fill:#FFF9C4
+    style n13 fill:#E1BEE7
+    style n14 fill:#E1BEE7
+    style n15 fill:#E1BEE7
+    style n16 fill:#E1BEE7
+    style n17 fill:#BBDEFB
+    style n21 fill:#FFF9C4
+    style n22 fill:#FFF9C4
+    style n23 fill:#C8E6C9
+    style n25 fill:#FFCDD2
+    style n27 fill:#FFF9C4
+    style n28 fill:#FFE0B2
+    style n29 fill:#FFE0B2
+    linkStyle 6 stroke:#FF6D00,fill:none
+    linkStyle 8 stroke:#FF6D00,fill:none
+    linkStyle 21 stroke:#2962FF,fill:none
+    linkStyle 22 stroke:#2962FF,fill:none
+    linkStyle 23 stroke:#2962FF,fill:none
+    linkStyle 33 stroke:#FF6D00,fill:none
+    linkStyle 34 stroke:#000000,fill:none
+    linkStyle 35 stroke:#FF6D00,fill:none
+    linkStyle 36 stroke:#FF6D00,fill:none
+    linkStyle 37 stroke:#FF6D00,fill:none
+    linkStyle 38 stroke:#FF6D00,fill:none
+    linkStyle 40 stroke:#FF6D00,fill:none
+    linkStyle 41 stroke:#FF6D00,fill:none

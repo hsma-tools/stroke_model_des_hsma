@@ -1,0 +1,1664 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://hsma-tools.github.io/jw_hsma_des_stroke_project/CHANGELOG/">
+      
+      
+        <link rel="prev" href="../tests/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>Changelog - Stroke Unit DES</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#v100" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Stroke Unit DES" class="md-header__button md-logo" aria-label="Stroke Unit DES" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stroke Unit DES
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/hsma-tools/stroke_model_des_hsma" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Stroke Unit DES" class="md-nav__button md-logo" aria-label="Stroke Unit DES" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stroke Unit DES
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/hsma-tools/stroke_model_des_hsma" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running the Model
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Running the Model
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../app/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Try the Model Online
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../running_locally/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run the Model Locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Classes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Model Classes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../g/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    g
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patient/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patient
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trial
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metricsSnapshot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics Snapshot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Details
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Model Details
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pathway_diagram/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pathway Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stress_des/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    STRESS DES Checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary-of-key-changes-to-model-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary of key changes to model logic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#new-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New features
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="New features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#web-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web App
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhancements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Enhancements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unavailability-times-for-ctp-and-sdec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unavailability times for CTP and SDEC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patient-arrivals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patient Arrivals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patient-object" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patient object
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#animation-and-generated-pathway-diagrams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Animation and generated pathway diagrams
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patient-pathways" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patient Pathways
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bugfixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bugfixes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bugfixes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sdec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SDEC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patient-pathways_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patient Pathways
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#thrombolysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thrombolysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patients
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-admin-and-structure-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Admin and Structure Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary-of-key-changes-to-model-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary of key changes to model logic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#new-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New features
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="New features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#web-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web App
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhancements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Enhancements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unavailability-times-for-ctp-and-sdec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unavailability times for CTP and SDEC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patient-arrivals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patient Arrivals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patient-object" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patient object
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#animation-and-generated-pathway-diagrams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Animation and generated pathway diagrams
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patient-pathways" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patient Pathways
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bugfixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bugfixes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bugfixes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sdec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SDEC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patient-pathways_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patient Pathways
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#thrombolysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thrombolysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patients
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-admin-and-structure-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Admin and Structure Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="v100">v1.0.0</h1>
+<p>The main focus of this release is adding an interactive web app frontend to the model.</p>
+<p>Where possible, the fundamental structure of the model code has been left unchanged.</p>
+<p>Some unavoidable changes to support front end result display, reproducibility, or flexibility of parameter input.</p>
+<p>Various bugfixes have also been introduced after discussion with the primary contributor.</p>
+<p>Additional comments and docstrings have also been added for readability, and the code has been linted.</p>
+<p>However, changes for aesthetic reasons, or where the change would reduce the readability/understandability
+of the code for contributors with less experience in coding, have been avoided.</p>
+<h2 id="summary-of-key-changes-to-model-logic">Summary of key changes to model logic</h2>
+<ul>
+<li>Thrombolysis rate was too high as all patients meeting onset time criteria (or eligible if CTP scanned) would then be thrombolysed. Added a contraindication chance parameter to reflect common contraindications like mild stroke symptoms and/or symptoms that are already improving, previous stroke within a certain  time period, severe uncontrolled hypertension, dementia, pregnancy, recently taken certain oral anticoagulants, previous use of thrombolysis for other conditions within a given time period, arriving later in thrombolysable window.</li>
+<li>Interarrival times for day and night were updated to reflect updated data</li>
+<li>Model time 0 reconceptualised as midnight on first day, with SDEC opening hours, CTP opening hours and in-hour/out-of-hour patient arrival generator times all now able to be set independently of each other</li>
+<li>Updated assumptions of % of patients falling into each onset time category (in thrombolysable window - only ct scan required, outside standard thrombolysable window or unknown onset but thrombolysable if ctp scan, not thrombolysable) from 33/33/33 to a split reflective of literature. Also allowed these probabilities to be set independently for in hour and out of hour arrivals to reflect change in number of patients with an unknown onset in out-of-hours.</li>
+<li>Updated counting of thrombolysis savings to ensure that patients were not counted as benefitting from the CTP scanner purely because they had a CTP scan and were then thrombolysed; this incorrectly attributed a benefit of CTP scanning to the patients who would have been thrombolysed even if only a CT scanner had been available (due to known onset).</li>
+<li>Adjusted patient pathways to ensure TIA, stroke mimic and non-stroke patients won't risk bypassing the SDEC if they are not</li>
+<li>Switched from two separate arrival generators for day and night to a single generator using a modified version of the NSPP Thinning distribution from sim-tools, avoiding arrivals exhibiting significant peaks at changeover times between the two generators (which was exacerbated by a bug that led to individuals often being generated at the exact changeover times).</li>
+<li>Adjusted the logic for SDEC admission avoidance eligibility for ICH patients to reflect the lower % of ICH patients avoiding admission compared to ischaemic stroke patients. This is due to the higher clinical risk of ICH patients being discharged that may lead to clinician reluctance or more stringent requirements, which also are not captured well by MRS on arrival, unlike for ischaemic strokes.</li>
+<li>Updated LOS distributions to reflect updated data.</li>
+<li>Adjusted queueing approach for patients moving from SDEC to ward to ensure they do not wait indefinitely in a scenario where the ward is running at full capacity and there is also a queue of patients waiting for direct admission to the ward, which led to a situation where the SDEC patients would never move out of the SDEC as the direct admissions would always being prioritised, blocking SDEC completely as those patients journies would effectively become stuck.</li>
+<li>Adjusted capacity checks for SDEC to ensure capacity was as intended, not 1 bed higher</li>
+<li>Adjusted resource allocation logic for SDEC to ensure patients couldn't be admitted to it during closed hours due to the way the obstruction logic was handled</li>
+<li>Switched distributions to use sim-tools and numpy's seed sequence, allowing for fully reproducible outputs and tests</li>
+<li>Allowed assumption of 1 day bed day saving per avoided admission to be varied</li>
+</ul>
+<h2 id="new-features">New features</h2>
+<h3 id="web-app">Web App</h3>
+<ul>
+<li>Built first draft of web app in Streamlit
+<img alt="" src="/docs/assets/app_preview.png" /><ul>
+<li>Display key metrics relating to model function (e.g. number of patients generated), and model outputs (e.g. money saved)<ul>
+<li>Tracked and displayed new metrics, including<ul>
+<li>thrombolysis rate of eligible patients (per SSNAP definition), separated out by the rate with and without CTP scanned patients</li>
+<li>extra patients thrombolysed per year</li>
+<li>Number of patient sper day and year</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Allow setting of various parameters, including<ul>
+<li>Beds available in ward</li>
+<li>Beds available in SDEC</li>
+<li>SDEC and CTP operational hours</li>
+<li>Default in and out of hour arrival rates (as well as definition of in and out of hours)</li>
+<li>Uplift in arrival rates</li>
+<li>Whether SDEC runs with therapy support</li>
+<li>Cost of beds<ul>
+<li>method of cost calculation for thrombolysis</li>
+<li>estimated bed day saving per patient of SDEC (<a href="https://github.com/hsma-tools/stroke_model_des_hsma/commit/48d0fc409065d6b47a88e0b0b9e85cf7cf433098">Click here to view commit</a>)</li>
+</ul>
+</li>
+<li>Thrombolysis contraindication rate for ischaemic stroke patients</li>
+<li>Number of runs</li>
+<li>Run and warm-up duration</li>
+<li>Random seed</li>
+<li>Debug message generation (sent to console)</li>
+</ul>
+</li>
+<li>Added vidigi animation</li>
+<li>Added vidigi process maps<ul>
+<li>Allow faceting by two separate variables</li>
+</ul>
+</li>
+<li>Added ward and SDEC occupancy plots<ul>
+<li>Added warm-up duration line to ward plot to allow visual assessment of whether warm-up period is appropriate</li>
+</ul>
+</li>
+<li>Added debugging plot for all patient attributes</li>
+<li>Added about page with process diagram and placeholders for pathway and model FAQs, including list of assumptions and simplifications in the model</li>
+<li>Added ability to compare previously run scenarios in app interface against a selectable 'baseline' run</li>
+<li>Added ability to save and load previous runs into app for easy access in the scenario comparison tab</li>
+</ul>
+</li>
+</ul>
+<h3 id="documentation">Documentation</h3>
+<ul>
+<li>Add numpydoc-style docstrings to all core model features</li>
+<li>Wrote comprehensive README</li>
+<li>Set up documentation site using mkdocs, mkdocs-material and mkdocstrings<ul>
+<li>Set up automatic building and publishing of site with GitHub action</li>
+<li>Added .nojekyll file to ensure GitHub doesn't try to post-process the built site</li>
+</ul>
+</li>
+<li>Built model flow diagram with Mermaid (/docs/diagrams/pathway_diagram.mmd)<ul>
+<li>This is also available to view in the 'About' page of the Streamlit app</li>
+</ul>
+</li>
+<li>Added first draft of STRESS DES model documentation<ul>
+<li>This can be viewed as part of the documentation site</li>
+</ul>
+</li>
+</ul>
+<h3 id="automated-tests">Automated Tests</h3>
+<ul>
+<li>Added<ul>
+<li>backtest (test against a known 'good' set of results)</li>
+<li>test for the same results being generated when the same paramaters and seed are used</li>
+<li>test for <strong>different</strong> results being generated when the same parameters and a <strong>different</strong> seed are used</li>
+<li>various additional tests (see tests/ folder)</li>
+</ul>
+</li>
+<li>Incorporated test output into documentation site</li>
+</ul>
+<h3 id="other">Other</h3>
+<ul>
+<li>Added devcontainer to allow running of code in web browser (via GitHub codespaces) without requiring local Python install</li>
+</ul>
+<h2 id="enhancements">Enhancements</h2>
+<h3 id="unavailability-times-for-ctp-and-sdec">Unavailability times for CTP and SDEC</h3>
+<ul>
+<li>Adjusted how ctp_value and sdec_value are set up and used across the model, making it consistent across the script running and app methods and more consistent with how other variables are managed (i.e. using g class)</li>
+<li>Allow independent setting of the start hour for CTP and SDEC<ul>
+<li>Previously, the CTP and SDEC would always have their first period of availability commencing at sim time 0.</li>
+<li>Sim time 0 has been reconceptualised to be midnight on the first simulated day.</li>
+<li>Users can now provide separate offsets to separate the start time of CTP and SDEC</li>
+<li>This also makes conversion of sim time to clock time more intuitive</li>
+<li>This also allows the start of the in/out of hours patient arrivals to be defined separately (and more intuitively) to the first period of scanning or SDEC availability</li>
+</ul>
+</li>
+</ul>
+<h3 id="patient-arrivals">Patient Arrivals</h3>
+<ul>
+<li>Significantly adjusted how the inter-arrival time parameter is handled in the app to allow for demand adjustment via the web app interface (as the way it was being done meant a denominator was used that did not intuitively map back to the inter-arrival time)<ul>
+<li>this new approach more closely matches how inter-arrival time is defined in resources like HSMA's 'the little book of DES'</li>
+<li>calculations were adjusted so that the average inter-arrival time passed through to the distribution <strong>did not change</strong></li>
+</ul>
+</li>
+<li>Allowed setting the start and end times of the arrival time periods<ul>
+<li>Previously, the start time of the first frequent arrival (daytime) period would be at sim time 0</li>
+<li>Sim time 0 has been reconceptualised to be midnight on the first simulated day.</li>
+<li>The start time and duration of the high/low arrival periods can now be set</li>
+<li>As mentioned in the CTP/SDEC section, this means that the arrival time periods can be decoupled from the CTP and SDEC availability times if desired</li>
+</ul>
+</li>
+<li>Switched to a single patient generator that uses the non-stationary poisson process thinning algorithm.<ul>
+<li>This avoids arrivals being higher at the start of the changeover to the lower rate period and gradually declining.</li>
+<li>This was done after several other approaches</li>
+<li>This currently uses a custom modified version of the NSPPThinning distribution from sim-tools as it appears there is a bug in the sim-tools implementation, which led to unexpected peaks still being present.</li>
+</ul>
+</li>
+<li>Updated IAT defaults to reflect updated real-world data</li>
+</ul>
+<h3 id="patient-object">Patient object</h3>
+<ul>
+<li>Switched<ul>
+<li>float and integer defaults from 0 to np.NaN.</li>
+<li>boolean defaults from False to None (with the exception of 'journey_complete').</li>
+<li>This all helps to avoid masking subtle bugs arising from attributes not getting set, as well as the possibility of metric calculations being influenced by incorrect 0 values.</li>
+</ul>
+</li>
+<li>Added method that tests that all patient attributes that should always have a value set during the course of the model display this behaviour</li>
+<li>Recorded various additional attributes in patient object for easier referencing later</li>
+<li>Split joint CT/CTP scanning attributes into separate attributes for easier debugging and pathway tracking</li>
+<li>Adjust setting of onset type so that it can vary for patients generated in hours and out-of-hours<ul>
+<li>set default so that slightly more patients will arrive with an unknown onset time during out-of-hours (which defaults to overnight period from midnight to 7am) than daytime hours<ul>
+<li>this has had preliminary values set based on https://strokeaudit.org/SupportFiles/Documents/Posters-and-oral-presentations/2020/ESOC-2020-Onset-to-arrival-times_Poster.aspx but will need replacing with more accurate values</li>
+</ul>
+</li>
+<li>may wish to decouple the time boundaries for this from the time boundaries for arrival rate in the future</li>
+</ul>
+</li>
+<li>Created a new attribute for tracking when patients with TIA, stroke-mimic or non-stroke are avoiding admission due to admission % chance check versus when ICH and I patients avoid admission in the 'true' sense (the sense that this model is primarily interested in)<ul>
+<li>this reduces the complexity around ensuring that patients leave the model at the point they should be eligible to, making it easier to follow what is going on for different patient groups</li>
+</ul>
+</li>
+</ul>
+<h3 id="animation-and-generated-pathway-diagrams">Animation and generated pathway diagrams</h3>
+<ul>
+<li>Switched from simpy resources to equivalent vidigi resources to support the recording of resource IDs in logs</li>
+<li>Added function to convert produced log into vidigi-style event log (<code>app/convert_event_log.py</code>)</li>
+<li>Animation and pathway diagrams added to web app interface</li>
+</ul>
+<h3 id="patient-pathways">Patient Pathways</h3>
+<ul>
+<li>Generally reviewed patient pathways to check behaviour for each subgroup of patients is correct, based on revised understanding of pathways from conversations with original model builder.<ul>
+<li>Checked subgroups by<ul>
+<li>SDEC being open</li>
+<li>SDEC being full/having capacity</li>
+<li>CT/CTP scanner availability</li>
+<li>Patient diagnosis type</li>
+<li>Admission avoidance flag</li>
+<li>Thrombolysis</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Refine admission avoidance criteria to better reflect real-world patterns; reduce the number of ICH patients eligible for admission avoidance</li>
+</ul>
+<h3 id="reproducibility">Reproducibility</h3>
+<ul>
+<li>Enhanced controllable randomness and reproducibility<ul>
+<li>Set up distinct random number streams per generator and activity using sim-tools distributions</li>
+<li>Set up uncorrelated random number streams using np.seedsequence</li>
+<li>Allowed user control of 'master' random seed used by np.seedsequence in g class and web frontend</li>
+<li>This makes it easier to confirm whether changes are materially affecting the outcome, assisting debugging and testing efforts</li>
+</ul>
+</li>
+</ul>
+<h3 id="other_1">Other</h3>
+<ul>
+<li>Added logging of model steps using the sim-tools trace function<ul>
+<li>Rich logging of individual steps enhances debugging and understanding of the model for those who are less familiar with its structure</li>
+<li>Clock-time aware logging (i.e. using 'real' time with am/pm, rather than just sim-start relative time) used to make logs easier to interpret</li>
+<li>This can be toggled in the web app interface</li>
+</ul>
+</li>
+<li>Added patient objects to a list in the model, allowing for easy individual post-hoc querying of all recorded patient attributes</li>
+<li>Recorded various additional attributes in trial object for easier referencing later</li>
+</ul>
+<h2 id="bugfixes">Bugfixes</h2>
+<h3 id="sdec">SDEC</h3>
+<ul>
+<li>Fixed typo in conditional check where it was accidentally looking at the sdec_value in the case where sdec_value was 100, where instead it should have been checking for ctp_value == 100 in that branch (<a href="https://github.com/hsma-tools/stroke_model_des_hsma/commit/e5f653217ba40c3364cefcbad21dfb7951dc7eec">Click here to view commit, though note it's not showing the original code properly</a>)</li>
+<li>Swapped SDEC fullness check from &lt;= to &lt; (as previously may have allowed patients in if SDEC at capacity)<ul>
+<li><strong>note that this has also been added into the original repository</strong> (https://github.com/jfwilliams4/des_stroke_project/commit/d68374d3b24ab28609f63eb4eb2019ac0d7faf85)</li>
+</ul>
+</li>
+<li>Remove resource check from SDEC admission code as this was seemingly sometimes causing delayed arrivals (<a href="https://github.com/hsma-tools/stroke_model_des_hsma/commit/aedd7cd5555424984c63becc2d95ef548974956e">Click here to view commit</a>) where the patient would enter SDEC during a period where SDEC should be closed</li>
+<li>Refactored SDEC savings code to ensure that savings are calculated intuitively/consistently across different parts of the model (<a href="https://github.com/hsma-tools/stroke_model_des_hsma/commit/dc675eab495cd1d9641ead67c897eb0bfdecc71f">Click here to view commit</a>)</li>
+</ul>
+<h3 id="patient-pathways_1">Patient Pathways</h3>
+<ul>
+<li>Adjust admission avoidance code to ensure that non-stroke/TIA/stroke mimics patients never incorrectly jump from CT/CTP scan to discharge when the SDEC is open, and will always spend time in the SDEC at least</li>
+<li>Adjust prioritisation of patients in the situation where the ward is full, ensuring SDEC patients will eventually move out of the SDEC (whereas previously patients waiting directly for a ward bed would always be prioritised, meaning that patients waiting to move from SDEC to ward could never progress their journey)</li>
+</ul>
+<h3 id="thrombolysis">Thrombolysis</h3>
+<ul>
+<li>Added a new flag to differentiate between patients for whom the CTP enables their thrombolysis treatment (i.e. those with an onset type of 1 - unknown but inside thrombolysable window or known and inside extended thrombolysable window with CTP).<ul>
+<li>this has replaced the logic check used to determine whether patients' savings should be counted, so fewer patients now meet the threshold for being counted as a thrombolysis saving (<a href="https://github.com/hsma-tools/stroke_model_des_hsma/commit/94e0303f2ec5a9642dbbc298f050a40fe89f2e0b">Click here to view commit</a>)</li>
+</ul>
+</li>
+<li>Added an additional step in thrombolysis to reflect the fact that not all patients who are eligible for thrombolysis on the basis of their arrival time will be eligible for thrombolysis in reality due to factors such as absolute or relative contraindications (e.g. mild stroke symptoms and/or symptoms that are already improving, previous stroke within a certain  time period, severe uncontrolled hypertension, dementia, pregnancy, recently taken certain oral anticoagulants, previous use of thrombolysis for other conditions within a given time period, arriving later in thrombolysable window). See https://pmc.ncbi.nlm.nih.gov/articles/PMC9323435/ which found that 47% of patients who had a known onset &lt;4.5 hours ago were not treated with thrombolysis, with 26% having absolute contraindication and 74% having relative contraindication, as well as https://pmc.ncbi.nlm.nih.gov/articles/PMC9890612/ and https://www.ncbi.nlm.nih.gov/books/NBK557411/.<ul>
+<li>Before applying this, thrombolysis rates in the model were unreasonably high once the onset time ratio had been moved from placeholder defaults (33/33/33 split of known, thrombolysable if CTPd, not thrombolysable) to more realistic defaults informed by literature</li>
+<li>See <a href="https://github.com/hsma-tools/stroke_model_des_hsma/commit/94e0303f2ec5a9642dbbc298f050a40fe89f2e0b">commit</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="patients">Patients</h3>
+<ul>
+<li>Fixed bug in patient diagnosis allocation where a diagnosis between the stroke mimic and non-stroke threshold would not get allocated any diagnosis (<a href="https://github.com/hsma-tools/stroke_model_des_hsma/commit/ccecec1b5c6c1239b43951265a8ef72dbf1cc319">Click here to view commit</a>)<ul>
+<li>note that this has also been added into the original repository (https://github.com/jfwilliams4/des_stroke_project/commit/d68374d3b24ab28609f63eb4eb2019ac0d7faf85)</li>
+</ul>
+</li>
+<li>Ensured ward LOS was recorded in patient object for both thrombolysed and non-thrombolysed patients (<a href="https://github.com/hsma-tools/stroke_model_des_hsma/commit/874069fcf5081925f7f460f7caf2ba9f570b440b">Click here to view commit</a>)</li>
+</ul>
+<h2 id="code-admin-and-structure-changes">Code Admin and Structure Changes</h2>
+<ul>
+<li>Updated structure of code to package structure to support better long-term development and use of additional documentation tools<ul>
+<li>Model classes split into separate file to model running code</li>
+<li>All code moved into src/stroke_ward_model</li>
+<li>Classes split into separate files as some had become very long after adding docstrings</li>
+<li>Added pyproject.toml file</li>
+</ul>
+</li>
+<li>Added "MARK" comments as markers to enable richer code minimap in core classes.<ul>
+<li>These will appear if you are using the VSCode minimap</li>
+</ul>
+</li>
+<li>Updated gitignore with wildcards to make matching of additional results files more robust</li>
+<li>Added a minimal requirements.txt and environment.yml files to replace strongly specified win_environment and mac_environment folders<ul>
+<li>Added new requirements including streamlit, mkdocs, mkdocs-material, mkdocstrings, vidigi, pytest</li>
+</ul>
+</li>
+<li>Added a separate requirements.txt file for web app<ul>
+<li>This removes the requirements that are not required for the web app, such as mkdocs and pytest</li>
+<li>This will be picked up by Streamlit community cloud, and shortens the load time for container reloads</li>
+</ul>
+</li>
+<li>Refactored ward admission code to reduce the number of conditional blocks required for ward stays</li>
+</ul>
+<h1 id="v010">v0.1.0</h1>
+<p>Initial model release (Considered JW original model).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.expand", "search.highlight", "search.share", "content.code.copy", "content.code.select", "navigation.top"], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+    
+  </body>
+</html>
