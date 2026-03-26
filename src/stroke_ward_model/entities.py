@@ -166,20 +166,20 @@ class Patient:
     def __init__(self, p_id):
         self.id = p_id
 
-        self.q_time_nurse = np.NaN  # SR NOTE - changed this to NaN by default
-        self.q_time_ward = np.NaN  # SR NOTE - changed this to NaN by default
+        self.q_time_nurse = np.nan  # SR NOTE - changed this to NaN by default
+        self.q_time_ward = np.nan  # SR NOTE - changed this to NaN by default
 
         # 0 = known onset, 1 = unknown onset (in ctp range),
         # 2 = unknown (out of ctp range)
         # SR NOTE: I've moved all random generation to the start of their
         # assessment to allow for reproducibility
         # self.onset_type = random.randint(0, 2)
-        self.onset_type = np.NaN
+        self.onset_type = np.nan
 
         # Max MRS is set to 5
         # self.mrs_type = min(round(random.expovariate(1.0 / g.mean_mrs)), 5)
-        self.mrs_type = np.NaN
-        self.mrs_discharge = np.NaN  # SR NOTE - changed this to NaN by default
+        self.mrs_type = np.nan
+        self.mrs_discharge = np.nan  # SR NOTE - changed this to NaN by default
 
         # <=5 is ICH, <=55 is I, <= 70 is TIA, <=85 is Stroke Mimic, >85 is
         # non\stroke, this set in g class
@@ -187,14 +187,14 @@ class Patient:
         # values seen in the g class
         # TODO: SR: Which is correct?
         # self.diagnosis = random.randint(0, 100)
-        self.diagnosis = np.NaN
+        self.diagnosis = np.nan
         # 0 = ICH, 1 = I, 2 = TIA, 3 = Stroke Mimic, 4 = non stroke
-        self.patient_diagnosis = np.NaN  # SR NOTE - changed this to NaN by default
+        self.patient_diagnosis = np.nan  # SR NOTE - changed this to NaN by default
         self.patient_diagnosis_type = "None"
 
         self.priority = 1
         # self.non_admission = random.randint(0, 100)
-        self.non_admission = np.NaN
+        self.non_admission = np.nan
 
         self.advanced_ct_pathway = None
         self.thrombolysis_enabled_by_ctp = None
@@ -209,42 +209,42 @@ class Patient:
         self.non_admitted_tia_ns_sm = None
 
         # NOTE: Additional items added by SR
-        self.ward_los = np.NaN
-        self.ward_los_thrombolysis = np.NaN
-        self.sdec_los = np.NaN
-        self.ctp_duration = np.NaN
-        self.ct_duration = np.NaN
+        self.ward_los = np.nan
+        self.ward_los_thrombolysis = np.nan
+        self.sdec_los = np.nan
+        self.ctp_duration = np.nan
+        self.ct_duration = np.nan
 
         self.arrived_ooh = None
 
         # Recording times of various events for animations and process logs
-        self.clock_start = np.NaN  # This can be considered to be their arrival time
+        self.clock_start = np.nan  # This can be considered to be their arrival time
 
-        self.nurse_q_start_time = np.NaN
-        self.nurse_triage_start_time = np.NaN
-        self.nurse_triage_end_time = np.NaN
+        self.nurse_q_start_time = np.nan
+        self.nurse_triage_start_time = np.nan
+        self.nurse_triage_end_time = np.nan
 
-        self.ct_scan_start_time = np.NaN
-        self.ct_scan_end_time = np.NaN
+        self.ct_scan_start_time = np.nan
+        self.ct_scan_end_time = np.nan
 
-        self.ctp_scan_start_time = np.NaN
-        self.ctp_scan_end_time = np.NaN
+        self.ctp_scan_start_time = np.nan
+        self.ctp_scan_end_time = np.nan
 
         self.sdec_running_when_required = None
         self.sdec_full_when_required = None
 
-        self.sdec_admit_time = np.NaN
-        self.sdec_discharge_time = np.NaN
+        self.sdec_admit_time = np.nan
+        self.sdec_discharge_time = np.nan
 
-        self.ward_q_start_time = np.NaN
-        self.ward_admit_time = np.NaN
-        self.ward_discharge_time = np.NaN
-        self.exit_time = np.NaN
+        self.ward_q_start_time = np.nan
+        self.ward_admit_time = np.nan
+        self.ward_discharge_time = np.nan
+        self.exit_time = np.nan
 
-        self.nurse_attending_id = np.NaN
-        self.ct_scanner_id = np.NaN
-        self.sdec_bed_id = np.NaN
-        self.ward_bed_id = np.NaN
+        self.nurse_attending_id = np.nan
+        self.ct_scanner_id = np.nan
+        self.sdec_bed_id = np.nan
+        self.ward_bed_id = np.nan
 
         self.generated_during_warm_up = None
 

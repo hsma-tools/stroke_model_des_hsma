@@ -1407,7 +1407,7 @@ class Model:
         try:
             self.mean_ward_occupancy = round(self.results_df["Ward Occupancy"].mean())
         except ValueError:
-            self.mean_ward_occupancy = np.NaN
+            self.mean_ward_occupancy = np.nan
 
         self.admission_delays = len(self.results_df[self.results_df["Q Time Ward"] > 0])
 

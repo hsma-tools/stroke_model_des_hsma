@@ -243,12 +243,12 @@ year{"" if self.sim_duration_days // 365 == 1 else "s"} and
         self.diagnosis_by_stroke_type_count_per_year = pd.DataFrame()
         self.diagnosis_by_stroke_type_count_per_day = pd.DataFrame()
 
-        self.patients_inside_sdec_operating_hours = np.NaN
-        self.patients_inside_sdec_operating_hours_per_year = np.NaN
-        self.patients_outside_sdec_operating_hours_per_year = np.NaN
+        self.patients_inside_sdec_operating_hours = np.nan
+        self.patients_inside_sdec_operating_hours_per_year = np.nan
+        self.patients_outside_sdec_operating_hours_per_year = np.nan
 
-        self.sdec_full = np.NaN
-        self.sdec_full_per_year = np.NaN
+        self.sdec_full = np.nan
+        self.sdec_full_per_year = np.nan
 
         self.create_diagnosis_by_stroke_type_count()
         self.calculate_missed_opportunities()
